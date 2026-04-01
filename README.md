@@ -1,247 +1,81 @@
-# Hades-Hybrid-OS
+⚠️ KRİTİK GÜVENLİK VE HUKUKİ UYARI (LEGAL NOTICE)
+[!IMPORTANT]
+TR: Bu proje MIT Lisansı ile korunmaktadır. Ancak bu lisans, yazılımın kullanımı sırasında üçüncü taraf hizmet sağlayıcılarının (OpenAI, Spotify, Google vb.) kullanım koşullarını (ToS) ihlal etmeniz durumunda doğacak sorumlulukları kapsamaz. HADES Shell kullanımı nedeniyle oluşabilecek hesap askıya alınması, kalıcı banlanma veya veri kaybı gibi durumların tüm riski ve sorumluluğu tamamen kullanıcıya aittir. Geliştirici (Eray Dalbudak) hiçbir sorumluluk kabul etmez. Yazılım tamamen eğitim ve Proof-of-Concept (PoC) amaçlıdır.
 
-> The HADES Layer: Transforming ChatGPT into a native desktop OS. Hybrid web-local bridge with high-fidelity voice, IoT automation, and custom HUD.
+EN: This project is protected by the MIT License. This software is intended for educational and research purposes only. The user acknowledges that using this tool may violate the Terms of Service of third-party platforms (e.g., OpenAI). The author is not responsible for any account suspensions, data loss, or legal consequences arising from the use of this software. Copyright (c) 2026 Eray Dalbudak.
 
-HADES is an experimental local desktop shell that extends a browser-based AI session with a local orchestration layer. The project keeps decision-making and conversation in the web session, while wake word handling, reminders, alarms, and voice pipeline management run locally.
+🧐 Overview
+HADES is an experimental local desktop shell that extends a browser-based AI session with a local orchestration layer. The project keeps decision-making and conversation in the web session, while wake word handling, reminders, alarms, and voice pipeline management run locally to ensure reliability and low latency.
 
 This repository is prepared as a public-safe source snapshot. It intentionally excludes secrets, runtime user profiles, cached tokens, and bundled browser binaries.
 
-## Overview
+🏗️ Architecture
+HADES combines three distinct layers:
 
-HADES combines three layers:
+HADES Launcher: Starts an isolated desktop session and prepares a clean runtime extension copy for each run.
 
-- `Launcher`: starts an isolated desktop shell and loads the runtime extension
-- `Bridge Extension`: connects the page, the local runtime, and the backend
-- `Local Backend`: handles reminders, alarms, provider adapters, and device integrations
+Key files: app/dev-electron-launcher.js, app/chatgpt-shell-config.js
 
-## Architecture
+HADES Bridge (Extension): Injects the HADES panel, manages wake-word flow, observes the page DOM, and forwards tool requests to the local backend.
 
-### 1. HADES Launcher
+Key files: content-script.js, service-worker.js, wake-bridge.js, theme-start.js
 
-The launcher opens an isolated desktop session and prepares a clean runtime extension copy for each run.
+HADES Core (Backend): Handles local scheduling, provider adapters (Spotify, Tuya), and runtime endpoints.
 
-Key files:
+Key file: server.js
 
-- `app/dev-electron-launcher.js`
-- `app/chatgpt-shell-config.js`
+✨ Features
+Smart Wake Word: Low-cost browser speech detection + Deepgram high-accuracy command transcription.
 
-### 2. HADES Bridge
+Local Intent Engine: Intercepts commands like "Set alarm" or "Turn off lights" locally to minimize OpenAI traffic and latency.
 
-The extension injects the HADES panel, manages wake-word flow, observes the page, and forwards tool requests to the local backend.
+Independent Scheduler: Alarms and reminders run on the local HADES engine, independent of ChatGPT's internal task system.
 
-Key files:
+Desktop HUD: Custom HADES branding, UI shell, and session panel overlay.
 
-- `app/chatgpt-bridge-extension/content-script.js`
-- `app/chatgpt-bridge-extension/service-worker.js`
-- `app/chatgpt-bridge-extension/wake-bridge.js`
-- `app/chatgpt-bridge-extension/theme-start.js`
+IoT & Media: Native integration for Spotify and Tuya (Smart Home) devices.
 
-### 3. HADES Core
+🛡️ Compliance and Risk Notice
+This project is unofficial and experimental. It is not affiliated with, endorsed by, or sponsored by OpenAI, Spotify, Deepgram, Google, or any third-party provider.
 
-The backend provides local scheduling, provider adapters, and runtime endpoints used by the extension.
+Users are solely responsible for reviewing:
 
-Key file:
+OpenAI Terms of Use
 
-- `server.js`
+Spotify Developer Policy
 
-## Features
+Deepgram Documentation
 
-- Wake word flow with low-cost browser speech detection and higher-accuracy command transcription
-- Local reminders and alarms independent from built-in chat task systems
-- Bridge-driven local tool execution
-- Desktop HUD and session panel
-- Custom HADES branding and UI shell
-- Optional provider integrations for Spotify, Tuya, Deepgram, and OpenAI
+🛠️ Installation & Setup
+Requirements
+Windows (Primary Target)
 
-## Compliance and Risk Notice
+Node.js 20+
 
-This project is unofficial and experimental.
+Optional: Deepgram API Key (Required for voice commands), Spotify Dev Credentials, Tuya Device Keys.
 
-It is **not affiliated with, endorsed by, or sponsored by** OpenAI, Spotify, Deepgram, Google, Chromium, or any other third-party provider referenced by the codebase.
+Steps
+Clone & Install:
 
-Users are solely responsible for ensuring their setup and usage comply with:
-
-- applicable laws and regulations
-- the terms and policies of any third-party service they connect
-- local privacy, device, and network rules in their environment
-
-Relevant policy pages to review before use:
-
-- OpenAI Terms of Use: https://openai.com/policies/terms-of-use/
-- OpenAI Brand Guidelines: https://openai.com/brand/
-- Spotify Developer Policy: https://developer.spotify.com/policy
-- Deepgram Authentication Docs: https://developers.deepgram.com/docs/authenticating
-
-If you are unsure whether a specific integration is permitted for your use case, do not use it with a primary account or sensitive environment until you have reviewed the applicable policies yourself.
-
-## Disclaimer
-
-This software is provided **"as is"**, without warranty of any kind.
-
-The maintainers do not guarantee:
-
-- continued compatibility with third-party services
-- account safety or service availability
-- policy compliance for your specific usage
-- uninterrupted operation or suitability for production
-
-By using this project, you accept full responsibility for your environment, credentials, connected services, and any outcomes resulting from usage.
-
-## What Is Included
-
-- application source
-- bridge extension source
-- backend source
-- tests
-- environment template
-
-## What Is Not Included
-
-- personal API keys
-- user session data
-- browser profile data
-- cached runtime tokens
-- local screenshots and debug artifacts
-- bundled Chromium binaries
-
-## Requirements
-
-- Windows
-- Node.js 20+ recommended
-- npm
-
-Optional integrations:
-
-- Deepgram API key for command transcription
-- Spotify developer credentials for Spotify integration
-- Tuya device credentials for IoT control
-- OpenAI API key if you use the backend OpenAI proxy features
-
-## Installation
-
-1. Clone the repository.
-
-```powershell
+Bash
 git clone <YOUR_REPO_URL>
 cd Hades-Hybrid-OS
-```
-
-2. Install dependencies.
-
-```powershell
 npm install
-```
+Environment Setup:
+Create a .env file from .env.example and fill in your keys:
 
-3. Create your local environment file.
+Kod snippet'i
+DEEPGRAM_API_KEY=your_key_here
+# Optional
+SPOTIFY_CLIENT_ID=...
+TUYA_DEVICE_IP=...
+Launch:
 
-```powershell
-Copy-Item .env.example .env
-```
-
-4. Open `.env` and fill in only the providers you want to use.
-
-Minimum practical setup for voice command flow:
-
-- `DEEPGRAM_API_KEY`
-
-Optional values:
-
-- `SPOTIFY_CLIENT_ID`
-- `SPOTIFY_CLIENT_SECRET`
-- `SPOTIFY_REDIRECT_URI`
-- `TUYA_DEVICE_ID`
-- `TUYA_DEVICE_KEY`
-- `TUYA_DEVICE_IP`
-- `TUYA_DEVICE_VERSION`
-- `OPENAI_API_KEY`
-
-5. Start the project.
-
-```powershell
+Bash
 npm run start
-```
+📜 License
+This project is licensed under the MIT License. See the LICENSE file for details.
 
-The launcher will use a local Chromium build if one exists under `./chromium`. If no bundled Chromium is present, it falls back to the Electron runtime installed with the project.
+Copyright (c) 2026 Eray Dalbudak.
 
-## First-Run Notes
-
-To get the project working reliably on a fresh machine, expect the following:
-
-- you must sign into your own ChatGPT account on first launch
-- microphone permission must be allowed for the desktop shell
-- the wake-word flow depends on browser speech recognition plus a valid `DEEPGRAM_API_KEY`
-- Spotify features require your own Spotify developer credentials and an active Spotify device
-- Tuya features require your own Tuya device credentials and reachable local device IP
-
-The public repository does **not** contain the original author profile, cached sessions, provider tokens, or browser data. That means the first launch will not look exactly like the author environment until you complete your own login and provider setup.
-
-## Closest Match to the Author Setup
-
-If you want behavior as close as possible to the author setup, use this checklist:
-
-1. Run on Windows.
-2. Install dependencies with `npm install`.
-3. Create `.env` from `.env.example`.
-4. Add at minimum `DEEPGRAM_API_KEY`.
-5. Add optional provider keys for Spotify, Tuya, and OpenAI only if you plan to use those features.
-6. Prefer a local Chromium build under `./chromium` for the closest shell behavior.
-7. Start the app with `npm run start`.
-8. Sign into ChatGPT in the opened shell window.
-9. Grant microphone permission when prompted.
-10. Verify that the HADES bridge panel appears and the backend reports healthy status.
-
-If `./chromium` is missing, the project falls back to Electron. That is supported, but the behavior may not be identical to the author's exact setup.
-
-## Feature Requirements
-
-- Wake word + command voice flow: `DEEPGRAM_API_KEY`, microphone access, browser speech recognition support
-- Alarm and reminders: no external provider required, runs locally
-- Spotify: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI`, and an open Spotify device
-- Tuya: `TUYA_DEVICE_ID`, `TUYA_DEVICE_KEY`, `TUYA_DEVICE_IP`, `TUYA_DEVICE_VERSION`
-- Backend OpenAI proxy features: `OPENAI_API_KEY`
-
-## Development Commands
-
-Start desktop shell:
-
-```powershell
-npm run start
-```
-
-Start backend only:
-
-```powershell
-npm run start:server
-```
-
-Run tests:
-
-```powershell
-npm test
-```
-
-## Project Structure
-
-```text
-app/
-  chatgpt-bridge-extension/
-  chatgpt-shell-config.js
-  dev-electron-launcher.js
-src/
-tests/
-server.js
-.env.example
-package.json
-```
-
-## Publishing Notes
-
-Before pushing changes, make sure the following never enter version control:
-
-- `.env`
-- `spotify-token.json`
-- `UserData/`
-- `chromium/`
-- screenshots, debug dumps, and local caches
-
-This repository snapshot already includes a `.gitignore` for those paths.
+Generated for the HADES Project - Research & Development Layer.
