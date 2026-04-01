@@ -163,6 +163,43 @@ npm run start
 
 The launcher will use a local Chromium build if one exists under `./chromium`. If no bundled Chromium is present, it falls back to the Electron runtime installed with the project.
 
+## First-Run Notes
+
+To get the project working reliably on a fresh machine, expect the following:
+
+- you must sign into your own ChatGPT account on first launch
+- microphone permission must be allowed for the desktop shell
+- the wake-word flow depends on browser speech recognition plus a valid `DEEPGRAM_API_KEY`
+- Spotify features require your own Spotify developer credentials and an active Spotify device
+- Tuya features require your own Tuya device credentials and reachable local device IP
+
+The public repository does **not** contain the original author profile, cached sessions, provider tokens, or browser data. That means the first launch will not look exactly like the author environment until you complete your own login and provider setup.
+
+## Closest Match to the Author Setup
+
+If you want behavior as close as possible to the author setup, use this checklist:
+
+1. Run on Windows.
+2. Install dependencies with `npm install`.
+3. Create `.env` from `.env.example`.
+4. Add at minimum `DEEPGRAM_API_KEY`.
+5. Add optional provider keys for Spotify, Tuya, and OpenAI only if you plan to use those features.
+6. Prefer a local Chromium build under `./chromium` for the closest shell behavior.
+7. Start the app with `npm run start`.
+8. Sign into ChatGPT in the opened shell window.
+9. Grant microphone permission when prompted.
+10. Verify that the HADES bridge panel appears and the backend reports healthy status.
+
+If `./chromium` is missing, the project falls back to Electron. That is supported, but the behavior may not be identical to the author's exact setup.
+
+## Feature Requirements
+
+- Wake word + command voice flow: `DEEPGRAM_API_KEY`, microphone access, browser speech recognition support
+- Alarm and reminders: no external provider required, runs locally
+- Spotify: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI`, and an open Spotify device
+- Tuya: `TUYA_DEVICE_ID`, `TUYA_DEVICE_KEY`, `TUYA_DEVICE_IP`, `TUYA_DEVICE_VERSION`
+- Backend OpenAI proxy features: `OPENAI_API_KEY`
+
 ## Development Commands
 
 Start desktop shell:
