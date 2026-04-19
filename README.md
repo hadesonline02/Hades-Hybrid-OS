@@ -1,81 +1,152 @@
-⚠️ KRİTİK GÜVENLİK VE HUKUKİ UYARI (LEGAL NOTICE)
-[!IMPORTANT]
-TR: Bu proje MIT Lisansı ile korunmaktadır. Ancak bu lisans, yazılımın kullanımı sırasında üçüncü taraf hizmet sağlayıcılarının (OpenAI, Spotify, Google vb.) kullanım koşullarını (ToS) ihlal etmeniz durumunda doğacak sorumlulukları kapsamaz. HADES Shell kullanımı nedeniyle oluşabilecek hesap askıya alınması, kalıcı banlanma veya veri kaybı gibi durumların tüm riski ve sorumluluğu tamamen kullanıcıya aittir. Geliştirici (Eray Dalbudak) hiçbir sorumluluk kabul etmez. Yazılım tamamen eğitim ve Proof-of-Concept (PoC) amaçlıdır.
+# HADES Hybrid OS
 
-EN: This project is protected by the MIT License. This software is intended for educational and research purposes only. The user acknowledges that using this tool may violate the Terms of Service of third-party platforms (e.g., OpenAI). The author is not responsible for any account suspensions, data loss, or legal consequences arising from the use of this software. Copyright (c) 2026 Eray Dalbudak.
+## Legal Notice
 
-🧐 Overview
-HADES is an experimental local desktop shell that extends a browser-based AI session with a local orchestration layer. The project keeps decision-making and conversation in the web session, while wake word handling, reminders, alarms, and voice pipeline management run locally to ensure reliability and low latency.
+This project is released under the MIT License, but that license does not waive responsibility for how third-party services are used. If you use this software in ways that violate the Terms of Service of OpenAI, Spotify, Google, Deepgram, or any other provider, all resulting risk and liability remain with the user.
 
-This repository is prepared as a public-safe source snapshot. It intentionally excludes secrets, runtime user profiles, cached tokens, and bundled browser binaries.
+This repository is shared for educational, research, and proof-of-concept purposes. The author is not responsible for account restrictions, data loss, service bans, or legal consequences caused by usage of this project.
 
-🏗️ Architecture
-HADES combines three distinct layers:
+## Overview
 
-HADES Launcher: Starts an isolated desktop session and prepares a clean runtime extension copy for each run.
+HADES is an experimental local desktop shell that extends a browser-based AI session with a local orchestration layer. Conversation and decision flow stay close to the browser session, while wake word handling, reminders, alarms, desktop controls, and provider integrations are managed locally for lower latency and better control.
 
-Key files: app/dev-electron-launcher.js, app/chatgpt-shell-config.js
+This public repository is a sanitized source snapshot. Secrets, user profiles, cached tokens, and bundled browser/runtime data are intentionally excluded.
 
-HADES Bridge (Extension): Injects the HADES panel, manages wake-word flow, observes the page DOM, and forwards tool requests to the local backend.
+## Architecture
 
-Key files: content-script.js, service-worker.js, wake-bridge.js, theme-start.js
+HADES is organized into three main layers:
 
-HADES Core (Backend): Handles local scheduling, provider adapters (Spotify, Tuya), and runtime endpoints.
+- Launcher: starts the desktop shell and prepares an isolated runtime session.
+- Bridge extension: injects the HADES UI, observes the browser session, and forwards tool actions to the local backend.
+- Core backend: manages scheduling, provider adapters, voice orchestration, and local APIs.
 
-Key file: server.js
+Important files:
 
-✨ Features
-Smart Wake Word: Low-cost browser speech detection + Deepgram high-accuracy command transcription.
+- `app/dev-electron-launcher.js`
+- `app/electron-main.js`
+- `app/chatgpt-bridge-extension/content-script.js`
+- `app/chatgpt-bridge-extension/service-worker.js`
+- `server.js`
 
-Local Intent Engine: Intercepts commands like "Set alarm" or "Turn off lights" locally to minimize OpenAI traffic and latency.
+## Features
 
-Independent Scheduler: Alarms and reminders run on the local HADES engine, independent of ChatGPT's internal task system.
+- Wake word pipeline for hands-free interaction
+- Local alarm and reminder scheduling
+- Spotify and Tuya integration hooks
+- Desktop overlay, ambient UI, and operations cockpit
+- Browser-to-local tool bridge for hybrid assistant workflows
 
-Desktop HUD: Custom HADES branding, UI shell, and session panel overlay.
+## Repository Safety
 
-IoT & Media: Native integration for Spotify and Tuya (Smart Home) devices.
+The following items are intentionally not included in this public-safe copy:
 
-🛡️ Compliance and Risk Notice
-This project is unofficial and experimental. It is not affiliated with, endorsed by, or sponsored by OpenAI, Spotify, Deepgram, Google, or any third-party provider.
+- Real `.env` files
+- OAuth/session token files such as `spotify-token.json`
+- Browser profile data such as `UserData/`
+- Bundled Chromium binaries
+- Local virtual environments, caches, and temporary assets
 
-Users are solely responsible for reviewing:
+## Requirements
 
-OpenAI Terms of Use
+Primary target:
 
-Spotify Developer Policy
+- Windows
+- Node.js 20+
+- npm
 
-Deepgram Documentation
+Optional voice/runtime extras:
 
-🛠️ Installation & Setup
-Requirements
-Windows (Primary Target)
+- Python 3.11+ recommended
+- Google credentials for cloud speech workflows
+- Deepgram API key for command transcription
+- Spotify developer credentials
+- Tuya device credentials
 
-Node.js 20+
+## Installation
 
-Optional: Deepgram API Key (Required for voice commands), Spotify Dev Credentials, Tuya Device Keys.
+### 1. Clone the repository
 
-Steps
-Clone & Install:
-
-Bash
-git clone <YOUR_REPO_URL>
+```bash
+git clone https://github.com/hadesonline02/Hades-Hybrid-OS.git
 cd Hades-Hybrid-OS
+```
+
+### 2. Install Node.js dependencies
+
+```bash
 npm install
-Environment Setup:
-Create a .env file from .env.example and fill in your keys:
+```
 
-Kod snippet'i
-DEEPGRAM_API_KEY=your_key_here
-# Optional
-SPOTIFY_CLIENT_ID=...
-TUYA_DEVICE_IP=...
-Launch:
+### 3. Install optional Python dependencies
 
-Bash
-npm run start
-📜 License
-This project is licensed under the MIT License. See the LICENSE file for details.
+If you want to use the Python-based voice helpers:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Create your environment file
+
+Copy `.env.example` to `.env` and fill in the values you actually use.
+
+Example:
+
+```env
+OPENAI_API_KEY=
+DEEPGRAM_API_KEY=
+SPOTIFY_CLIENT_ID=
+SPOTIFY_CLIENT_SECRET=
+TUYA_DEVICE_ID=
+TUYA_DEVICE_KEY=
+GOOGLE_APPLICATION_CREDENTIALS=
+```
+
+## Running The Project
+
+Start the desktop shell:
+
+```bash
+npm start
+```
+
+Start only the backend:
+
+```bash
+npm run start:server
+```
+
+Start the static UI only:
+
+```bash
+npm run start:ui
+```
+
+On Windows you can also use:
+
+```bat
+start.bat
+```
+
+## Testing
+
+```bash
+npm test
+```
+
+## Packaging
+
+```bash
+npm run dist:win
+```
+
+## Notes
+
+- This repository keeps the integration code, but removes real secrets and local runtime data.
+- Some voice features depend on external credentials and local audio device setup.
+- This is an unofficial experimental project and is not affiliated with OpenAI, Spotify, Google, Deepgram, or Tuya.
+
+## License
+
+MIT License. See `LICENSE` for details.
 
 Copyright (c) 2026 Eray Dalbudak.
-
-Generated for the HADES Project - Research & Development Layer.

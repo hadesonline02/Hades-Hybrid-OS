@@ -1,0 +1,6 @@
+# Optional Python dependencies for the local voice runtime helpers.
+# Install only if you plan to use the Python-based TTS / wake-word scripts.
+
+gTTS
+sounddevice
+SpeechRecognition
