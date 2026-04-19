@@ -1,58 +1,81 @@
-# HADES
+⚠️ KRİTİK GÜVENLİK VE HUKUKİ UYARI (LEGAL NOTICE)
+[!IMPORTANT]
+TR: Bu proje MIT Lisansı ile korunmaktadır. Ancak bu lisans, yazılımın kullanımı sırasında üçüncü taraf hizmet sağlayıcılarının (OpenAI, Spotify, Google vb.) kullanım koşullarını (ToS) ihlal etmeniz durumunda doğacak sorumlulukları kapsamaz. HADES Shell kullanımı nedeniyle oluşabilecek hesap askıya alınması, kalıcı banlanma veya veri kaybı gibi durumların tüm riski ve sorumluluğu tamamen kullanıcıya aittir. Geliştirici (Eray Dalbudak) hiçbir sorumluluk kabul etmez. Yazılım tamamen eğitim ve Proof-of-Concept (PoC) amaçlıdır.
 
-Bu klasor, ana projeye dokunulmadan GitHub icin hazirlanmis temiz kopyadir.
+EN: This project is protected by the MIT License. This software is intended for educational and research purposes only. The user acknowledges that using this tool may violate the Terms of Service of third-party platforms (e.g., OpenAI). The author is not responsible for any account suspensions, data loss, or legal consequences arising from the use of this software. Copyright (c) 2026 Eray Dalbudak.
 
-## Bu kopyada neler var
+🧐 Overview
+HADES is an experimental local desktop shell that extends a browser-based AI session with a local orchestration layer. The project keeps decision-making and conversation in the web session, while wake word handling, reminders, alarms, and voice pipeline management run locally to ensure reliability and low latency.
 
-- Uygulamanin kaynak kodu, arayuz dosyalari, Electron katmani ve testleri
-- `package.json`, `package-lock.json`, `start.bat` ve bos `hades-schedule-db.json`
-- Guvenli paylasim icin guncellenmis `.env.example` ve `.gitignore`
+This repository is prepared as a public-safe source snapshot. It intentionally excludes secrets, runtime user profiles, cached tokens, and bundled browser binaries.
 
-## Guvenlik icin cikarilanlar
+🏗️ Architecture
+HADES combines three distinct layers:
 
-- Gercek `.env` dosyasi
-- `spotify-token.json` oturum belirtecleri
-- `UserData/` tarayici oturum ve profil verileri
-- `chromium/`, `node_modules/`, `.venv-voice/` gibi agir veya yeniden uretilebilir runtime klasorleri
-- Gecici ekran goruntuleri ve cache dosyalari
+HADES Launcher: Starts an isolated desktop session and prepares a clean runtime extension copy for each run.
 
-## Kurulum
+Key files: app/dev-electron-launcher.js, app/chatgpt-shell-config.js
 
-1. `.env.example` dosyasini `.env` olarak kopyalayin.
-2. Gerekli anahtarlari ve servis ayarlarini `.env` icine yazin.
-3. Gerekirse Google Speech icin `GOOGLE_APPLICATION_CREDENTIALS` degiskenine servis hesap JSON yolunu verin.
-4. Paketleri kurun:
+HADES Bridge (Extension): Injects the HADES panel, manages wake-word flow, observes the page DOM, and forwards tool requests to the local backend.
 
-```powershell
+Key files: content-script.js, service-worker.js, wake-bridge.js, theme-start.js
+
+HADES Core (Backend): Handles local scheduling, provider adapters (Spotify, Tuya), and runtime endpoints.
+
+Key file: server.js
+
+✨ Features
+Smart Wake Word: Low-cost browser speech detection + Deepgram high-accuracy command transcription.
+
+Local Intent Engine: Intercepts commands like "Set alarm" or "Turn off lights" locally to minimize OpenAI traffic and latency.
+
+Independent Scheduler: Alarms and reminders run on the local HADES engine, independent of ChatGPT's internal task system.
+
+Desktop HUD: Custom HADES branding, UI shell, and session panel overlay.
+
+IoT & Media: Native integration for Spotify and Tuya (Smart Home) devices.
+
+🛡️ Compliance and Risk Notice
+This project is unofficial and experimental. It is not affiliated with, endorsed by, or sponsored by OpenAI, Spotify, Deepgram, Google, or any third-party provider.
+
+Users are solely responsible for reviewing:
+
+OpenAI Terms of Use
+
+Spotify Developer Policy
+
+Deepgram Documentation
+
+🛠️ Installation & Setup
+Requirements
+Windows (Primary Target)
+
+Node.js 20+
+
+Optional: Deepgram API Key (Required for voice commands), Spotify Dev Credentials, Tuya Device Keys.
+
+Steps
+Clone & Install:
+
+Bash
+git clone <YOUR_REPO_URL>
+cd Hades-Hybrid-OS
 npm install
-```
+Environment Setup:
+Create a .env file from .env.example and fill in your keys:
 
-5. Masaustu surumunu baslatin:
+Kod snippet'i
+DEEPGRAM_API_KEY=your_key_here
+# Optional
+SPOTIFY_CLIENT_ID=...
+TUYA_DEVICE_IP=...
+Launch:
 
-```powershell
-npm start
-```
+Bash
+npm run start
+📜 License
+This project is licensed under the MIT License. See the LICENSE file for details.
 
-Alternatif olarak Windows icin `start.bat` calistirilabilir.
+Copyright (c) 2026 Eray Dalbudak.
 
-## Test ve paketleme
-
-```powershell
-npm test
-npm run dist:win
-```
-
-## GitHub'a yukleme
-
-```powershell
-git init
-git add .
-git commit -m "Initial sanitized HADES release"
-git branch -M main
-git remote add origin <REPO_URL>
-git push -u origin main
-```
-
-## Not
-
-Bu temiz kopyada API entegrasyon kodlari korunmustur; yalnizca gizli anahtarlar, tokenlar ve yerel oturum verileri cikartilmistir.
+Generated for the HADES Project - Research & Development Layer.

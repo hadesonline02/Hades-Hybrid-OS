@@ -1,6 +1,9 @@
 node_modules/
+.pnpm-store/
+.npm/
 .env
 .env.local
+.env.*.local
 .venv-voice/
 .voice-cache/
 UserData/
@@ -8,9 +11,11 @@ chromium/
 voice-runtime/
 dist/
 release/
+build/
 coverage/
 *.log
 *.tmp
 tmp-*.png
 spotify-token.json
+hades-schedule-db.json
 app/voice-runtime/__pycache__/
