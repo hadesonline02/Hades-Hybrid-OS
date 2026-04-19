@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>HADES Ses HUD</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: rgba(9, 15, 25, 0.62);
+            --border: rgba(142, 247, 209, 0.22);
+            --text: rgba(244, 249, 255, 0.96);
+            --muted: rgba(220, 232, 247, 0.78);
+            --accent: #8ef7d1;
+            --accent2: #78d7ff;
+            --warn: #ffd166;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: transparent;
+            font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+            user-select: none;
+        }
+
+        body {
+            padding: 10px;
+        }
+
+        .hud {
+            width: 100%;
+            height: 100%;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            background:
+                linear-gradient(180deg, rgba(9, 15, 25, 0.68), rgba(14, 24, 40, 0.78)),
+                radial-gradient(circle at top right, rgba(142, 247, 209, 0.14), transparent 34%);
+            backdrop-filter: blur(14px);
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.18);
+            padding: 12px 14px;
+            -webkit-app-region: drag;
+        }
+
+        .hud[data-tone="warn"] {
+            --border: rgba(255, 209, 102, 0.26);
+        }
+
+        .kicker {
+            margin: 0 0 6px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        .state {
+            margin: 0 0 4px;
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .detail {
+            margin: 0 0 10px;
+            min-height: 32px;
+            font-size: 12px;
+            line-height: 1.35;
+            color: var(--muted);
+        }
+
+        .meter {
+            width: 100%;
+            height: 6px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+        }
+
+        .meter > span {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            transform: scaleX(0);
+            transform-origin: left center;
+            will-change: transform;
+        }
+    </style>
+</head>
+<body>
+    <section class="hud" id="hud" data-tone="ok">
+        <p class="kicker">HADES Ses</p>
+        <p class="state" id="state">Ses hazır</p>
+        <p class="detail" id="detail">"HADES" deyince dinlemeye başlayacak.</p>
+        <div class="meter"><span id="meter"></span></div>
+    </section>
+    <script>
+        const hud = document.getElementById('hud');
+        const stateEl = document.getElementById('state');
+        const detailEl = document.getElementById('detail');
+        const meterEl = document.getElementById('meter');
+        const bases = [
+            window.HADESDesktop?.backendBase || 'http://127.0.0.1:3001',
+            'http://127.0.0.1:3001',
+            'http://localhost:3001'
+        ].filter(Boolean);
+        let lastSig = '';
+        let targetMeter = 0;
+        let displayMeter = 0;
+        let renderFrameId = 0;
+        let pollTimer = 0;
+        let fetchInFlight = false;
+
+        function clampMeter(value) {
+            return Math.max(0, Math.min(100, Number(value) || 0));
+        }
+
+        function paintMeter(force = false) {
+            if (force) {
+                displayMeter = targetMeter;
+            } else {
+                const delta = targetMeter - displayMeter;
+                if (Math.abs(delta) < 0.15) {
+                    displayMeter = targetMeter;
+                } else {
+                    displayMeter += delta * 0.24;
+                }
+            }
+            meterEl.style.transform = `scaleX(${Math.max(0, Math.min(1, displayMeter / 100))})`;
+        }
+
+        function animateMeter() {
+            paintMeter(false);
+            renderFrameId = window.requestAnimationFrame(animateMeter);
+        }
+
+        function render(payload = {}) {
+            const tone = payload.tone === 'warn' ? 'warn' : 'ok';
+            const chip = String(payload.chip || 'Ses hazır').trim() || 'Ses hazır';
+            const detail = String(payload.detail || '"HADES" deyince dinlemeye başlayacak.').trim() || '"HADES" deyince dinlemeye başlayacak.';
+            const meter = clampMeter(payload.meter);
+            hud.dataset.tone = tone;
+            if (stateEl.textContent !== chip) stateEl.textContent = chip;
+            if (detailEl.textContent !== detail) detailEl.textContent = detail;
+            targetMeter = meter;
+        }
+
+        async function fetchState() {
+            for (const base of bases) {
+                try {
+                    const response = await fetch(`${base}/bridge/voice-overlay-state`, { cache: 'no-store' });
+                    if (!response.ok) continue;
+                    return await response.json();
+                } catch (_) {}
+            }
+            return null;
+        }
+
+        async function tick() {
+            if (fetchInFlight) return;
+            fetchInFlight = true;
+            try {
+                const payload = await fetchState();
+                if (!payload) return;
+                const sig = JSON.stringify(payload);
+                if (sig === lastSig) return;
+                lastSig = sig;
+                render(payload);
+            } finally {
+                fetchInFlight = false;
+            }
+        }
+
+        function scheduleTick(delay = 90) {
+            window.clearTimeout(pollTimer);
+            pollTimer = window.setTimeout(async () => {
+                await tick();
+                scheduleTick(90);
+            }, delay);
+        }
+
+        render();
+        paintMeter(true);
+        renderFrameId = window.requestAnimationFrame(animateMeter);
+        void tick().finally(() => scheduleTick(90));
+        hud.addEventListener('dblclick', () => {
+            try {
+                window.HADESDesktop?.restoreMainWindow?.();
+            } catch (_) {}
+        });
+        window.addEventListener('beforeunload', () => {
+            window.clearTimeout(pollTimer);
+            if (renderFrameId) window.cancelAnimationFrame(renderFrameId);
+        });
+    </script>
+</body>
+</html>

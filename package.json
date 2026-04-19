@@ -1,0 +1,49 @@
+{
+  "name": "hades-asistan",
+  "version": "1.0.0",
+  "description": "HADES Akıllı Asistan",
+  "main": "app/electron-main.js",
+  "scripts": {
+    "start": "node app/dev-electron-launcher.js",
+    "start:server": "node server.js",
+    "start:ui": "serve -s . -l 3000",
+    "start:desktop": "node app/dev-electron-launcher.js",
+    "dist:win": "electron-builder --win portable nsis",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch"
+  },
+  "devDependencies": {
+    "electron": "^41.1.0",
+    "electron-builder": "^26.8.1",
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "@google-cloud/speech": "^7.3.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mic": "^2.1.2",
+    "serve": "^14.2.3",
+    "spotify-web-api-node": "^5.0.2",
+    "tuyapi": "^7.7.1",
+    "ws": "^8.18.3"
+  },
+  "build": {
+    "appId": "com.hades.desktop",
+    "productName": "HADES",
+    "files": [
+      "app/**/*",
+      "src/**/*",
+      "index.html",
+      "server.js",
+      "package.json",
+      ".env.example"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        "portable",
+        "nsis"
+      ]
+    }
+  }
+}

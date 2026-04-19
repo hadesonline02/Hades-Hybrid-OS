@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HADES Ambient Dock</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: rgba(6, 12, 22, 0.96);
+            --bg-soft: rgba(10, 18, 30, 0.92);
+            --line: rgba(116, 227, 255, 0.20);
+            --line-strong: rgba(116, 227, 255, 0.38);
+            --text: rgba(239, 248, 255, 0.96);
+            --muted: rgba(168, 198, 214, 0.76);
+            --glow: rgba(79, 203, 255, 0.18);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: transparent;
+            font-family: "Segoe UI", "Inter", sans-serif;
+            color: var(--text);
+        }
+
+        body {
+            display: flex;
+            align-items: stretch;
+            justify-content: flex-start;
+            padding: 10px 0 10px 10px;
+        }
+
+        .shell {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: 46px minmax(0, 1fr);
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .tab,
+        .panel {
+            border: 1px solid var(--line);
+            background:
+                radial-gradient(circle at top left, rgba(90, 197, 255, 0.16), transparent 28%),
+                linear-gradient(180deg, var(--bg), var(--bg-soft));
+            box-shadow:
+                inset 0 0 22px rgba(116, 227, 255, 0.04),
+                0 14px 34px rgba(0, 0, 0, 0.32),
+                0 0 18px var(--glow);
+            backdrop-filter: blur(16px);
+        }
+
+        .tab {
+            width: 46px;
+            border-radius: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 8px;
+        }
+
+        .tab button {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            width: 100%;
+            height: 42px;
+            border-radius: 12px;
+            transition: background 140ms ease, transform 140ms ease;
+        }
+
+        .tab button:hover,
+        .tab button:focus-visible {
+            outline: none;
+            background: rgba(116, 227, 255, 0.10);
+            transform: translateX(1px);
+        }
+
+        .burger {
+            display: grid;
+            gap: 4px;
+            justify-items: center;
+            align-content: center;
+        }
+
+        .burger span {
+            display: block;
+            width: 16px;
+            height: 2px;
+            border-radius: 999px;
+            background: currentColor;
+        }
+
+        .brand {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            font-size: 10px;
+            letter-spacing: 0.26em;
+            text-transform: uppercase;
+            color: var(--muted);
+            user-select: none;
+        }
+
+        .panel {
+            border-radius: 24px;
+            padding: 18px 16px 18px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-width: 0;
+            overflow: auto;
+        }
+
+        body[data-expanded="false"] .panel {
+            display: none;
+        }
+
+        .eyebrow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .title {
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .status {
+            font-size: 12px;
+            color: var(--muted);
+            min-height: 32px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 10px;
+            align-content: start;
+        }
+
+        .action {
+            appearance: none;
+            border: 1px solid rgba(116, 227, 255, 0.16);
+            border-radius: 16px;
+            min-height: 56px;
+            padding: 12px;
+            font: inherit;
+            text-align: left;
+            color: var(--text);
+            background: linear-gradient(180deg, rgba(11, 20, 35, 0.98), rgba(7, 13, 24, 0.98));
+            cursor: pointer;
+            transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+        }
+
+        .action:hover,
+        .action:focus-visible {
+            outline: none;
+            transform: translateY(-1px);
+            border-color: var(--line-strong);
+            box-shadow: 0 0 18px rgba(116, 227, 255, 0.12);
+        }
+
+        .label {
+            display: block;
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .value {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .footer {
+            margin-top: auto;
+            font-size: 11px;
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            color: rgba(150, 184, 198, 0.68);
+        }
+    </style>
+</head>
+<body data-expanded="false">
+    <section class="shell">
+        <aside class="tab">
+            <button id="toggle" type="button" aria-label="Kontrol deck">
+                <span class="burger" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </span>
+            </button>
+            <div class="brand">HADES</div>
+        </aside>
+
+        <section class="panel">
+            <div class="eyebrow">
+                <span>Ambient Deck</span>
+                <span id="clock">--:--:--</span>
+            </div>
+            <div>
+                <div class="title">Control Deck</div>
+                <div class="status" id="status">Desktop kontrol hazirlaniyor.</div>
+            </div>
+            <div class="grid">
+                <button class="action" id="open-cockpit" type="button">
+                    <span class="label">Ops</span>
+                    <span class="value">Cockpit Ac</span>
+                </button>
+                <button class="action" id="minimize-cockpit" type="button">
+                    <span class="label">Ops</span>
+                    <span class="value">Cockpit Kucult</span>
+                </button>
+                <button class="action" id="restore-main" type="button">
+                    <span class="label">Main</span>
+                    <span class="value">Ana Pencere</span>
+                </button>
+                <button class="action" id="hide-ambient" type="button">
+                    <span class="label">Desktop</span>
+                    <span class="value">Ambient Kapat</span>
+                </button>
+            </div>
+            <div class="footer" id="footer">Ambient deck hazir degil.</div>
+        </section>
+    </section>
+
+    <script>
+        const refs = {
+            body: document.body,
+            toggle: document.getElementById('toggle'),
+            clock: document.getElementById('clock'),
+            status: document.getElementById('status'),
+            footer: document.getElementById('footer'),
+            openCockpit: document.getElementById('open-cockpit'),
+            minimizeCockpit: document.getElementById('minimize-cockpit'),
+            restoreMain: document.getElementById('restore-main'),
+            hideAmbient: document.getElementById('hide-ambient')
+        };
+
+        function setStatus(text = '') {
+            refs.status.textContent = String(text || '').trim() || refs.status.textContent;
+        }
+
+        async function syncDockExpanded(expanded) {
+            refs.body.dataset.expanded = expanded ? 'true' : 'false';
+            try {
+                await window.HADESDesktop?.setAmbientControlDockExpanded?.(expanded);
+            } catch (_) {
+                // Sessizce devam et.
+            }
+        }
+
+        async function refreshState() {
+            try {
+                const [ambient, dock] = await Promise.all([
+                    window.HADESDesktop?.getAmbientDesktopState?.(),
+                    window.HADESDesktop?.getAmbientControlDockState?.()
+                ]);
+                refs.footer.textContent = ambient?.enabled
+                    ? `Ambient aktif / ekran katmani: ${ambient.activeCount || 0}`
+                    : 'Ambient pasif';
+                refs.body.dataset.expanded = dock?.expanded ? 'true' : 'false';
+            } catch (_) {
+                refs.footer.textContent = 'Desktop bridge baglantisi bekleniyor.';
+            }
+        }
+
+        async function run(action) {
+            try {
+                switch (action) {
+                    case 'open-cockpit':
+                        await window.HADESDesktop?.openOpsCockpit?.();
+                        setStatus('Ops Cockpit acildi.');
+                        break;
+                    case 'minimize-cockpit':
+                        await window.HADESDesktop?.minimizeOpsCockpit?.();
+                        setStatus('Ops Cockpit kucultuldu.');
+                        break;
+                    case 'restore-main':
+                        await window.HADESDesktop?.restoreMainWindow?.();
+                        setStatus('Ana pencere geri getirildi.');
+                        break;
+                    case 'hide-ambient':
+                        await window.HADESDesktop?.hideAmbientDesktop?.();
+                        setStatus('Ambient wallpaper kapatildi.');
+                        break;
+                    default:
+                        break;
+                }
+            } catch (error) {
+                setStatus(`Komut hatasi: ${error?.message || String(error)}`);
+            } finally {
+                refreshState().catch(() => {});
+            }
+        }
+
+        refs.toggle.addEventListener('click', async () => {
+            const next = refs.body.dataset.expanded !== 'true';
+            await syncDockExpanded(next);
+        });
+
+        refs.openCockpit.addEventListener('click', () => { void run('open-cockpit'); });
+        refs.minimizeCockpit.addEventListener('click', () => { void run('minimize-cockpit'); });
+        refs.restoreMain.addEventListener('click', () => { void run('restore-main'); });
+        refs.hideAmbient.addEventListener('click', () => { void run('hide-ambient'); });
+
+        function tickClock() {
+            refs.clock.textContent = new Intl.DateTimeFormat('tr-TR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }).format(new Date());
+        }
+
+        tickClock();
+        refreshState().catch(() => {});
+        window.setInterval(tickClock, 1000);
+        window.setInterval(() => {
+            refreshState().catch(() => {});
+        }, 3000);
+    </script>
+</body>
+</html>

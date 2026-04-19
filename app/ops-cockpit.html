@@ -1,0 +1,1953 @@
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HADES Ops Cockpit</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg0: #02060c;
+            --bg1: #07101a;
+            --bg2: #0c1b29;
+            --bg3: #123047;
+            --panel: rgba(7, 16, 26, 0.72);
+            --panel-strong: rgba(4, 10, 18, 0.9);
+            --border: rgba(118, 228, 255, 0.18);
+            --border-strong: rgba(118, 228, 255, 0.34);
+            --text: #eff7ff;
+            --muted: #86a5bf;
+            --accent: #79f0d4;
+            --accent2: #66c6ff;
+            --accent3: #9c8cff;
+            --warn: #ffca6b;
+            --danger: #ff7f9f;
+            --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+            --pointer-x: 0;
+            --pointer-y: 0;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at top right, rgba(102, 198, 255, 0.16), transparent 24%),
+                radial-gradient(circle at top left, rgba(121, 240, 212, 0.12), transparent 26%),
+                radial-gradient(circle at bottom center, rgba(156, 140, 255, 0.1), transparent 30%),
+                linear-gradient(180deg, var(--bg2), var(--bg0));
+            color: var(--text);
+            font-family: "Bahnschrift", "Segoe UI Variable Display", "Segoe UI", sans-serif;
+        }
+
+        body {
+            padding: clamp(8px, 1vw, 18px);
+            position: relative;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        body::before {
+            background:
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 120px 120px;
+            mask-image: linear-gradient(180deg, rgba(255,255,255,0.26), transparent 78%);
+            opacity: 0.35;
+        }
+
+        body::after {
+            background:
+                radial-gradient(circle at 15% 22%, rgba(121, 240, 212, 0.1), transparent 18%),
+                radial-gradient(circle at 82% 14%, rgba(102, 198, 255, 0.12), transparent 16%),
+                radial-gradient(circle at 62% 78%, rgba(156, 140, 255, 0.08), transparent 18%);
+        }
+
+        .shell {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 10px;
+            transform-style: preserve-3d;
+        }
+
+        .shell[data-reaction="command"] .topbar,
+        .shell[data-reaction="command"] .core-orbit {
+            animation: reaction-command 420ms ease;
+        }
+
+        .shell[data-reaction="glitch"] .panel {
+            animation: reaction-glitch 320ms steps(2, end);
+        }
+
+        .shell[data-reaction="pulse"] .core-orbit,
+        .shell[data-reaction="pulse"] .browser-overlay-signal {
+            animation: reaction-pulse 980ms ease;
+        }
+
+        .topbar {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 16px;
+            align-items: center;
+            padding: clamp(12px, 1vw, 18px) clamp(14px, 1.2vw, 20px);
+            border: 1px solid var(--border-strong);
+            border-radius: 24px;
+            background:
+                linear-gradient(180deg, rgba(12, 27, 41, 0.92), rgba(5, 12, 20, 0.9)),
+                radial-gradient(circle at top right, rgba(121, 240, 212, 0.14), transparent 35%);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(16px);
+        }
+
+        .brand-kicker {
+            margin: 0 0 8px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        .brand-title {
+            margin: 0;
+            font-size: clamp(28px, 2.2vw, 42px);
+            line-height: 1;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            text-shadow: 0 0 24px rgba(102, 198, 255, 0.22);
+        }
+
+        .brand-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .brand-sigil {
+            position: relative;
+            width: 54px;
+            height: 54px;
+            border-radius: 999px;
+            border: 1px solid rgba(118, 228, 255, 0.28);
+            background:
+                radial-gradient(circle, rgba(121, 240, 212, 0.26), rgba(102, 198, 255, 0.08) 58%, transparent 70%),
+                rgba(255, 255, 255, 0.03);
+            box-shadow: inset 0 0 24px rgba(102, 198, 255, 0.18), 0 0 22px rgba(102, 198, 255, 0.12);
+            overflow: hidden;
+        }
+
+        .brand-sigil::before,
+        .brand-sigil::after {
+            content: "";
+            position: absolute;
+            inset: 8px;
+            border-radius: inherit;
+            border: 1px solid rgba(118, 228, 255, 0.22);
+            animation: rotate-ring 14s linear infinite;
+        }
+
+        .brand-sigil::after {
+            inset: 16px;
+            border-color: rgba(121, 240, 212, 0.26);
+            animation-duration: 9s;
+            animation-direction: reverse;
+        }
+
+        .brand-copy {
+            margin: 10px 0 0;
+            max-width: 620px;
+            color: var(--muted);
+            font-size: clamp(12px, 0.9vw, 14px);
+            line-height: 1.5;
+        }
+
+        .mission-strip {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .layout {
+            min-height: 0;
+            display: grid;
+            grid-template-columns: minmax(220px, 16vw) minmax(0, 1fr);
+            grid-template-areas: "rail browser";
+            gap: 10px;
+        }
+
+        .layout[data-browser-collapsed="true"] {
+            grid-template-columns: 1fr;
+            grid-template-areas: "rail";
+        }
+
+        .layout[data-browser-collapsed="true"] .browser-shell {
+            display: none;
+        }
+
+        .panel {
+            min-height: 0;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background:
+                linear-gradient(180deg, rgba(11, 23, 36, 0.88), rgba(4, 10, 18, 0.94)),
+                linear-gradient(135deg, rgba(102, 198, 255, 0.04), transparent 55%);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(18px);
+        }
+
+        .panel::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 0 36px rgba(102, 198, 255, 0.05);
+            pointer-events: none;
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px 18px 12px;
+            border-bottom: 1px solid rgba(118, 228, 255, 0.12);
+        }
+
+        .panel-title {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .panel-note {
+            margin: 0;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .rail {
+            grid-area: rail;
+            min-height: 0;
+            display: grid;
+            grid-template-rows: minmax(280px, 38vh) auto minmax(0, 1fr);
+            gap: 10px;
+        }
+
+        .layout[data-browser-collapsed="true"] .rail {
+            grid-template-columns: minmax(300px, 1.05fr) minmax(0, 0.95fr);
+            grid-template-rows: minmax(280px, 38vh) minmax(0, 1fr);
+            grid-template-areas:
+                "core core"
+                "status events";
+        }
+
+        .core-panel {
+            grid-area: core;
+        }
+
+        .core-stage {
+            position: relative;
+            min-height: 0;
+            height: 100%;
+            padding: 14px 16px 16px;
+            display: grid;
+            grid-template-columns: minmax(220px, 0.92fr) minmax(220px, 1.08fr);
+            gap: 16px;
+            overflow: hidden;
+        }
+
+        .core-stage::before {
+            content: "";
+            position: absolute;
+            inset: 14px;
+            border-radius: 22px;
+            border: 1px solid rgba(118, 228, 255, 0.08);
+            background:
+                linear-gradient(180deg, rgba(102, 198, 255, 0.03), transparent 30%),
+                radial-gradient(circle at 20% 24%, rgba(121, 240, 212, 0.08), transparent 20%);
+            pointer-events: none;
+        }
+
+        .parallax-plane,
+        .scan-radial,
+        .core-grid-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .parallax-plane {
+            transition: transform 160ms ease-out;
+        }
+
+        .plane-far {
+            background:
+                radial-gradient(circle at 22% 30%, rgba(121, 240, 212, 0.1), transparent 16%),
+                radial-gradient(circle at 76% 28%, rgba(102, 198, 255, 0.08), transparent 14%),
+                radial-gradient(circle at 58% 74%, rgba(156, 140, 255, 0.08), transparent 18%);
+            filter: blur(20px);
+            transform: translate3d(calc(var(--pointer-x) * 10px), calc(var(--pointer-y) * 10px), 0);
+        }
+
+        .plane-mid {
+            background:
+                linear-gradient(90deg, rgba(255, 255, 255, 0.024) 1px, transparent 1px),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 32px 32px;
+            mask-image: radial-gradient(circle at center, rgba(255,255,255,0.9), transparent 82%);
+            opacity: 0.24;
+            transform: translate3d(calc(var(--pointer-x) * 18px), calc(var(--pointer-y) * 18px), 0);
+        }
+
+        .plane-near {
+            background: conic-gradient(from 90deg, transparent 0deg, rgba(102, 198, 255, 0.12) 48deg, transparent 120deg, rgba(121, 240, 212, 0.1) 220deg, transparent 300deg);
+            opacity: 0.18;
+            filter: blur(8px);
+            transform: translate3d(calc(var(--pointer-x) * 24px), calc(var(--pointer-y) * 24px), 0);
+        }
+
+        .scan-radial {
+            inset: 10%;
+            background: radial-gradient(circle at center, rgba(121, 240, 212, 0.08), transparent 58%);
+            animation: scan-pulse 6s ease-in-out infinite;
+        }
+
+        .core-grid-layer {
+            background:
+                linear-gradient(90deg, rgba(102, 198, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(rgba(102, 198, 255, 0.035) 1px, transparent 1px);
+            background-size: 40px 40px;
+            mask-image: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.34) 18%, rgba(255,255,255,0.12) 78%, transparent 100%);
+            opacity: 0.2;
+        }
+
+        .core-orbit {
+            position: relative;
+            min-height: 0;
+            display: grid;
+            place-items: center;
+            transform-style: preserve-3d;
+            transform: translate3d(calc(var(--pointer-x) * 14px), calc(var(--pointer-y) * 14px), 22px);
+            filter: drop-shadow(0 0 24px rgba(102, 198, 255, 0.12));
+        }
+
+        .orbital-ring,
+        .network-globe {
+            position: absolute;
+            border-radius: 999px;
+        }
+
+        .orbital-ring {
+            border: 1px solid rgba(118, 228, 255, 0.22);
+            box-shadow: inset 0 0 18px rgba(102, 198, 255, 0.08), 0 0 18px rgba(102, 198, 255, 0.08);
+            animation: rotate-ring 16s linear infinite;
+        }
+
+        .ring-a { width: clamp(170px, 19vw, 250px); height: clamp(170px, 19vw, 250px); }
+        .ring-b { width: clamp(220px, 24vw, 300px); height: clamp(118px, 13vw, 170px); transform: rotateX(72deg); animation-duration: 11s; }
+        .ring-c { width: clamp(220px, 24vw, 300px); height: clamp(118px, 13vw, 170px); transform: rotateY(74deg); animation-duration: 9s; animation-direction: reverse; border-color: rgba(121, 240, 212, 0.26); }
+
+        .network-globe {
+            width: clamp(150px, 17vw, 220px);
+            aspect-ratio: 1;
+            border: 1px solid rgba(118, 228, 255, 0.28);
+            background:
+                radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.2), rgba(102, 198, 255, 0.12) 30%, rgba(5, 13, 22, 0.08) 62%, transparent 72%),
+                radial-gradient(circle at 30% 34%, rgba(121, 240, 212, 0.22), transparent 24%),
+                linear-gradient(180deg, rgba(7, 18, 28, 0.22), rgba(7, 18, 28, 0.72));
+            box-shadow: inset 0 0 32px rgba(102, 198, 255, 0.16), 0 0 36px rgba(102, 198, 255, 0.14);
+            overflow: hidden;
+            animation: globe-wobble 8s ease-in-out infinite;
+        }
+
+        .network-globe::before,
+        .network-globe::after {
+            content: "";
+            position: absolute;
+            inset: 12%;
+            border-radius: inherit;
+            border: 1px solid rgba(118, 228, 255, 0.2);
+        }
+
+        .network-globe::before { transform: rotateX(78deg); }
+        .network-globe::after { transform: rotateY(76deg); }
+        }
+
+        .status-panel {
+            grid-area: status;
+        }
+
+        .events-panel {
+            grid-area: events;
+        }
+
+        .globe-line {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 110%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(118, 228, 255, 0.42), transparent);
+            transform-origin: center;
+            opacity: 0.55;
+        }
+
+        .lat-a { transform: translate(-50%, -50%) rotate(8deg); }
+        .lat-b { transform: translate(-50%, -50%) rotate(-14deg); }
+        .long-a { transform: translate(-50%, -50%) rotate(90deg); }
+        .long-b { transform: translate(-50%, -50%) rotate(56deg); }
+
+        .globe-node {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: radial-gradient(circle, #fff, var(--accent2));
+            box-shadow: 0 0 14px currentColor;
+        }
+
+        .node-a { top: 24%; left: 26%; color: var(--accent); }
+        .node-b { top: 34%; right: 20%; color: var(--accent2); }
+        .node-c { bottom: 24%; left: 34%; color: var(--accent3); }
+        .node-d { bottom: 22%; right: 28%; color: var(--accent); }
+
+        .token-stream {
+            position: absolute;
+            inset: 10%;
+            pointer-events: none;
+        }
+
+        .token-stream span {
+            position: absolute;
+            left: var(--x, 50%);
+            top: var(--y, 50%);
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: radial-gradient(circle, rgba(255,255,255,0.94), rgba(102,198,255,0.46));
+            box-shadow: 0 0 14px rgba(102, 198, 255, 0.46);
+            opacity: 0;
+            animation: token-orbit var(--duration, 5s) linear infinite;
+            animation-delay: var(--delay, 0s);
+        }
+
+        .wave-bars {
+            position: absolute;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: flex-end;
+            gap: 5px;
+            height: 62px;
+            width: min(84%, 260px);
+        }
+
+        .wave-bars span {
+            flex: 1;
+            min-width: 4px;
+            border-radius: 999px 999px 4px 4px;
+            background: linear-gradient(180deg, rgba(121, 240, 212, 0.9), rgba(102, 198, 255, 0.24));
+            box-shadow: 0 0 18px rgba(102, 198, 255, 0.16);
+            transform-origin: bottom;
+            animation: wave-idle 2.8s ease-in-out infinite;
+            animation-delay: var(--delay, 0s);
+            opacity: 0.82;
+        }
+
+        .shell[data-core-mode="processing"] .wave-bars span,
+        .shell[data-core-mode="search"] .wave-bars span,
+        .shell[data-core-mode="responding"] .wave-bars span {
+            animation-name: wave-active;
+            animation-duration: 1.2s;
+        }
+
+        .shell[data-core-mode="glitch"] .wave-bars span {
+            animation-name: wave-glitch;
+            animation-duration: 340ms;
+        }
+
+        .core-copy {
+            position: relative;
+            z-index: 1;
+            min-height: 0;
+            display: grid;
+            align-content: center;
+            gap: 12px;
+        }
+
+        .core-kicker {
+            margin: 0;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        .core-title {
+            margin: 0;
+            font-size: clamp(28px, 2vw, 36px);
+            line-height: 1.02;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .core-detail {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.6;
+            font-size: 13px;
+        }
+
+        .core-readout {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .readout-card {
+            border-radius: 16px;
+            border: 1px solid rgba(118, 228, 255, 0.1);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.02)),
+                rgba(255, 255, 255, 0.02);
+            padding: 12px 14px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+        }
+
+        .readout-card span {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .readout-card strong {
+            display: block;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .core-feed {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 8px;
+        }
+
+        .core-feed li {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 10px;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: 16px;
+            border: 1px solid rgba(118, 228, 255, 0.08);
+            background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(102,198,255,0.025));
+        }
+
+        .feed-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 999px;
+            background: currentColor;
+            box-shadow: 0 0 14px currentColor;
+        }
+
+        .feed-copy { min-width: 0; }
+        .feed-title { margin: 0 0 4px; font-size: 12px; font-weight: 700; }
+        .feed-text { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+        .feed-time { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+
+        .status-grid {
+            padding: 12px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .status-card {
+            border: 1px solid rgba(118, 228, 255, 0.12);
+            border-radius: 18px;
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.035), rgba(102, 198, 255, 0.02)),
+                rgba(255, 255, 255, 0.02);
+            padding: 12px 14px;
+            position: relative;
+        }
+
+        .status-card::after {
+            content: "";
+            position: absolute;
+            left: 14px;
+            top: 14px;
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: currentColor;
+            box-shadow: 0 0 16px currentColor;
+        }
+
+        .status-card strong {
+            display: block;
+            margin: 0 0 8px 16px;
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .status-card span {
+            display: block;
+            font-size: 17px;
+            font-weight: 700;
+            margin-left: 16px;
+        }
+
+        .status-card small {
+            display: block;
+            margin-top: 8px;
+            margin-left: 16px;
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .tone-ok {
+            color: var(--accent);
+        }
+
+        .tone-warn {
+            color: var(--warn);
+        }
+
+        .tone-bad {
+            color: var(--danger);
+        }
+
+        .events {
+            min-height: 0;
+            display: grid;
+            grid-template-rows: auto 1fr;
+        }
+
+        .event-list {
+            margin: 0;
+            padding: 0 12px 12px;
+            list-style: none;
+            overflow: auto;
+        }
+
+        .event-item {
+            margin: 10px 0 0;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(102, 198, 255, 0.025));
+            border: 1px solid rgba(118, 228, 255, 0.08);
+        }
+
+        .event-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 6px;
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .event-title {
+            margin: 0 0 6px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .event-body {
+            margin: 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.45;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .browser-shell {
+            grid-area: browser;
+            min-height: 0;
+            display: grid;
+            grid-template-rows: auto auto auto minmax(0, 1fr);
+        }
+
+        .browser-shell[data-loading="true"] .browser-overlay {
+            opacity: 1;
+        }
+
+        .browser-shell[data-collapsed="true"] {
+            grid-template-rows: auto auto;
+        }
+
+        .browser-shell[data-collapsed="true"] .browser-controls,
+        .browser-shell[data-collapsed="true"] .browser-meta,
+        .browser-shell[data-collapsed="true"] .browser-viewport,
+        .browser-shell[data-collapsed="true"] webview {
+            display: none;
+        }
+
+        .browser-controls {
+            padding: 10px 12px 8px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .button-row,
+        .quick-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .address-row {
+            display: grid;
+            grid-template-columns: auto auto auto minmax(220px, 1fr) auto auto;
+            gap: 10px;
+        }
+
+        button,
+        input {
+            border: 0;
+            outline: 0;
+            border-radius: 14px;
+            font: inherit;
+        }
+
+        button {
+            padding: 11px 14px;
+            background: linear-gradient(135deg, rgba(102, 198, 255, 0.18), rgba(121, 240, 212, 0.14));
+            color: var(--text);
+            border: 1px solid rgba(118, 228, 255, 0.12);
+            cursor: pointer;
+            transition: transform 120ms ease, border-color 120ms ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            border-color: rgba(127, 227, 184, 0.28);
+        }
+
+        button[data-variant="ghost"] {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.045);
+            color: var(--text);
+            border: 1px solid rgba(118, 228, 255, 0.12);
+        }
+
+        .browser-meta {
+            padding: 0 12px 8px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .browser-meta strong {
+            color: var(--text);
+        }
+
+        .browser-viewport {
+            position: relative;
+            min-height: 0;
+        }
+
+        .browser-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 180ms ease;
+            background:
+                linear-gradient(180deg, rgba(5, 12, 18, 0.02), rgba(5, 12, 18, 0.28)),
+                linear-gradient(90deg, transparent 0%, rgba(121, 240, 212, 0.06) 50%, transparent 100%);
+        }
+
+        .browser-overlay::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 26px, 24px 100%;
+            opacity: 0.26;
+            animation: scan-lines 3.2s linear infinite;
+        }
+
+        .browser-overlay-signal {
+            position: absolute;
+            right: 24px;
+            top: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(118, 228, 255, 0.2);
+            background: rgba(4, 12, 20, 0.56);
+            box-shadow: 0 0 24px rgba(102, 198, 255, 0.1);
+        }
+
+        .browser-status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 999px;
+            background: var(--accent);
+            box-shadow: 0 0 14px var(--accent);
+            animation: blink 1.2s ease-in-out infinite;
+        }
+
+        .browser-status-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        webview {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            border: 0;
+            background: #fff;
+            border-top: 1px solid rgba(118, 228, 255, 0.12);
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .panel-head-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 1360px) {
+            .layout {
+                grid-template-columns: 240px minmax(0, 1fr);
+            }
+
+            .core-stage {
+                grid-template-columns: 1fr;
+            }
+
+            .core-orbit {
+                min-height: 220px;
+            }
+        }
+
+        @media (max-width: 1180px) {
+            body {
+                padding: 12px;
+            }
+
+            .layout {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "browser"
+                    "rail";
+            }
+
+            .rail {
+                min-height: 360px;
+            }
+
+            .layout[data-browser-collapsed="true"] .rail {
+                grid-template-columns: 1fr;
+                grid-template-rows: minmax(260px, auto) auto minmax(0, 1fr);
+                grid-template-areas:
+                    "core"
+                    "status"
+                    "events";
+            }
+
+            .address-row {
+                grid-template-columns: repeat(3, auto) minmax(0, 1fr);
+            }
+        }
+
+        @media (max-width: 860px) {
+            .topbar {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar-actions {
+                justify-content: flex-start;
+            }
+
+            .address-row {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .address-row input {
+                grid-column: 1 / -1;
+            }
+
+            .core-readout,
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-height: 860px) {
+            .brand-copy {
+                display: none;
+            }
+
+            .shell {
+                gap: 8px;
+            }
+
+            .topbar {
+                padding: 10px 12px;
+            }
+
+            .panel-head {
+                padding: 12px 14px 10px;
+            }
+
+            .status-grid {
+                padding: 12px;
+                gap: 8px;
+            }
+        }
+
+        @keyframes rotate-ring {
+            from { transform: rotate(0deg) rotateX(70deg); }
+            to { transform: rotate(360deg) rotateX(70deg); }
+        }
+
+        @keyframes globe-wobble {
+            0%, 100% { transform: rotateX(10deg) rotateY(-8deg); }
+            50% { transform: rotateX(-8deg) rotateY(10deg); }
+        }
+
+        @keyframes scan-pulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.96); }
+            50% { opacity: 0.7; transform: scale(1.03); }
+        }
+
+        @keyframes token-orbit {
+            0% { transform: translate3d(0, 0, 0) scale(0.2); opacity: 0; }
+            15% { opacity: 0.8; }
+            50% { transform: translate3d(calc(var(--drift-x, 0px) * 0.6), calc(var(--drift-y, 0px) * 0.6), 0) scale(1); opacity: 1; }
+            100% { transform: translate3d(var(--drift-x, 0px), var(--drift-y, 0px), 0) scale(0.2); opacity: 0; }
+        }
+
+        @keyframes wave-idle {
+            0%, 100% { transform: scaleY(0.18); opacity: 0.4; }
+            50% { transform: scaleY(0.72); opacity: 0.84; }
+        }
+
+        @keyframes wave-active {
+            0%, 100% { transform: scaleY(0.18); }
+            15% { transform: scaleY(0.96); }
+            55% { transform: scaleY(0.42); }
+            80% { transform: scaleY(1); }
+        }
+
+        @keyframes wave-glitch {
+            0%, 100% { transform: scaleY(0.14); opacity: 0.4; }
+            20% { transform: scaleY(1); opacity: 1; }
+            40% { transform: scaleY(0.1); opacity: 0.3; }
+            60% { transform: scaleY(0.92); opacity: 1; }
+            80% { transform: scaleY(0.28); opacity: 0.6; }
+        }
+
+        @keyframes scan-lines {
+            from { transform: translateY(-28px); }
+            to { transform: translateY(28px); }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.45; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes reaction-command {
+            0% { transform: translate3d(0, 0, 0); }
+            30% { transform: translate3d(4px, -2px, 0); }
+            60% { transform: translate3d(-3px, 1px, 0); }
+            100% { transform: translate3d(0, 0, 0); }
+        }
+
+        @keyframes reaction-glitch {
+            0% { transform: translate(0, 0); filter: hue-rotate(0deg); }
+            20% { transform: translate(3px, -2px); filter: hue-rotate(28deg); }
+            40% { transform: translate(-3px, 2px); filter: hue-rotate(-18deg); }
+            60% { transform: translate(2px, 0); filter: hue-rotate(18deg); }
+            100% { transform: translate(0, 0); filter: hue-rotate(0deg); }
+        }
+
+        @keyframes reaction-pulse {
+            0% { transform: scale(1); opacity: 0.9; }
+            40% { transform: scale(1.04); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.9; }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <header class="topbar">
+            <div>
+                <p class="brand-kicker">HADES Control Plane</p>
+                <div class="brand-row">
+                    <h1 class="brand-title">Ops Cockpit</h1>
+                    <div class="brand-sigil" aria-hidden="true"></div>
+                </div>
+                <p class="brand-copy">Canlı runtime durumu, tool akışı ve HADES'in komutla sürebildiği gömülü browser tek panelde. Kullanıcı "bul ve aç" dediğinde agent buradaki browserı kullanabilir.</p>
+                <div class="mission-strip">
+                    <span class="pill" id="coreModePill">Idle Intelligence</span>
+                    <span class="pill" id="coreIntentPill">Komut bekleniyor</span>
+                </div>
+            </div>
+            <div class="topbar-actions">
+                <span class="pill" id="connectionPill">Backend bağlanıyor</span>
+                <button id="refreshStateButton" type="button">Durumu Yenile</button>
+                <button id="toggleBrowserDockButton" type="button" data-variant="ghost">Browser KÃ¼Ã§Ã¼lt</button>
+                <button id="minimizeCockpitButton" type="button" data-variant="ghost">Cockpit Küçült</button>
+                <button id="restoreMainButton" type="button" data-variant="ghost">Ana Pencere</button>
+            </div>
+        </header>
+
+        <section class="layout">
+            <aside class="rail">
+                <section class="panel core-panel">
+                    <div class="panel-head">
+                        <div>
+                            <h2 class="panel-title">AI Core Visualizer</h2>
+                            <p class="panel-note">Nöral akış, intent çözümü ve mikro reaksiyonlar burada görünür.</p>
+                        </div>
+                    </div>
+                    <div class="core-stage" id="coreStage">
+                        <div class="parallax-plane plane-far"></div>
+                        <div class="parallax-plane plane-mid"></div>
+                        <div class="parallax-plane plane-near"></div>
+                        <div class="scan-radial"></div>
+                        <div class="core-grid-layer"></div>
+                        <div class="core-orbit">
+                            <div class="orbital-ring ring-a"></div>
+                            <div class="orbital-ring ring-b"></div>
+                            <div class="orbital-ring ring-c"></div>
+                            <div class="network-globe" aria-hidden="true">
+                                <div class="globe-line lat-a"></div>
+                                <div class="globe-line lat-b"></div>
+                                <div class="globe-line long-a"></div>
+                                <div class="globe-line long-b"></div>
+                                <div class="globe-node node-a"></div>
+                                <div class="globe-node node-b"></div>
+                                <div class="globe-node node-c"></div>
+                                <div class="globe-node node-d"></div>
+                            </div>
+                            <div class="token-stream" id="tokenStream"></div>
+                            <div class="wave-bars" id="waveBars"></div>
+                        </div>
+                        <div class="core-copy">
+                            <p class="core-kicker" id="coreKicker">Idle Intelligence</p>
+                            <h2 class="core-title" id="coreTitle">HADES hazır</h2>
+                            <p class="core-detail" id="coreDetail">Komut gelmediğinde bile panel canlı kalır; veri akışı ve küçük taramalar sürer.</p>
+                            <div class="core-readout">
+                                <article class="readout-card">
+                                    <span>Mode</span>
+                                    <strong id="coreModeValue">Standby</strong>
+                                </article>
+                                <article class="readout-card">
+                                    <span>Intent</span>
+                                    <strong id="coreIntentValue">Awaiting Intent</strong>
+                                </article>
+                                <article class="readout-card">
+                                    <span>Latency</span>
+                                    <strong id="coreLatencyValue">0 ms</strong>
+                                </article>
+                            </div>
+                            <ol class="core-feed" id="coreFeed"></ol>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel status-panel">
+                    <div class="panel-head">
+                        <div>
+                            <h2 class="panel-title">Runtime</h2>
+                            <p class="panel-note">Canlı servis görüntüsü</p>
+                        </div>
+                    </div>
+                    <div class="status-grid" id="statusGrid"></div>
+                </section>
+
+                <section class="panel events events-panel">
+                    <div class="panel-head">
+                        <div>
+                            <h2 class="panel-title">Event Timeline</h2>
+                            <p class="panel-note">Tool dispatch, browser komutları ve raporlar</p>
+                        </div>
+                    </div>
+                    <ol class="event-list" id="eventList"></ol>
+                </section>
+            </aside>
+
+            <section class="panel browser-shell">
+                <div class="panel-head">
+                    <div>
+                        <h2 class="panel-title">Agent Browser</h2>
+                        <p class="panel-note">HADES burada arama yapıp sayfa açabilir</p>
+                    </div>
+                    <div class="panel-head-actions">
+                        <button id="toggleBrowserPanelButton" type="button" data-variant="ghost">Browser Küçült</button>
+                    </div>
+                </div>
+
+                <div class="browser-controls">
+                    <form class="address-row" id="addressForm">
+                        <button type="button" id="backButton" data-variant="ghost">Geri</button>
+                        <button type="button" id="forwardButton" data-variant="ghost">İleri</button>
+                        <button type="button" id="reloadButton" data-variant="ghost">Yenile</button>
+                        <input id="addressInput" type="text" placeholder="URL yaz veya arama gir..." />
+                        <button type="submit">Aç</button>
+                        <button type="button" id="searchButton">Ara</button>
+                    </form>
+
+                    <div class="quick-row">
+                        <button type="button" class="quick-link" data-target="https://www.google.com/">Google</button>
+                        <button type="button" class="quick-link" data-target="https://www.youtube.com/">YouTube</button>
+                        <button type="button" class="quick-link" data-target="https://github.com/">GitHub</button>
+                        <button type="button" id="openExternalButton" data-variant="ghost">Harici Aç</button>
+                    </div>
+                </div>
+
+                <div class="browser-meta" id="browserMeta">Browser hazırlanıyor...</div>
+                <div class="browser-viewport">
+                    <div class="browser-overlay" id="browserOverlay">
+                        <div class="browser-overlay-signal">
+                            <span class="browser-status-dot"></span>
+                            <span class="browser-status-label" id="browserStatusLabel">Standby</span>
+                        </div>
+                    </div>
+                    <webview id="agentBrowser" partition="hades-cockpit-browser" allowpopups src="about:blank"></webview>
+                </div>
+            </section>
+        </section>
+    </div>
+
+    <script>
+        const backendBase = (window.HADESDesktop && window.HADESDesktop.backendBase) || 'http://127.0.0.1:3001';
+        const wsBase = backendBase.replace(/^http/i, 'ws');
+        const shellEl = document.querySelector('.shell');
+        const layoutEl = document.querySelector('.layout');
+        const browserShellEl = document.querySelector('.browser-shell');
+        const eventList = document.getElementById('eventList');
+        const statusGrid = document.getElementById('statusGrid');
+        const browserMeta = document.getElementById('browserMeta');
+        const browserStatusLabel = document.getElementById('browserStatusLabel');
+        const connectionPill = document.getElementById('connectionPill');
+        const coreModePill = document.getElementById('coreModePill');
+        const coreIntentPill = document.getElementById('coreIntentPill');
+        const coreKicker = document.getElementById('coreKicker');
+        const coreTitle = document.getElementById('coreTitle');
+        const coreDetail = document.getElementById('coreDetail');
+        const coreModeValue = document.getElementById('coreModeValue');
+        const coreIntentValue = document.getElementById('coreIntentValue');
+        const coreLatencyValue = document.getElementById('coreLatencyValue');
+        const coreFeed = document.getElementById('coreFeed');
+        const tokenStream = document.getElementById('tokenStream');
+        const waveBars = document.getElementById('waveBars');
+        const addressForm = document.getElementById('addressForm');
+        const addressInput = document.getElementById('addressInput');
+        const browserEl = document.getElementById('agentBrowser');
+        const backButton = document.getElementById('backButton');
+        const forwardButton = document.getElementById('forwardButton');
+        const reloadButton = document.getElementById('reloadButton');
+        const searchButton = document.getElementById('searchButton');
+        const openExternalButton = document.getElementById('openExternalButton');
+        const refreshStateButton = document.getElementById('refreshStateButton');
+        const toggleBrowserDockButton = document.getElementById('toggleBrowserDockButton');
+        const restoreMainButton = document.getElementById('restoreMainButton');
+        const minimizeCockpitButton = document.getElementById('minimizeCockpitButton');
+        const toggleBrowserPanelButton = document.getElementById('toggleBrowserPanelButton');
+
+        const IDLE_LINES = [
+            'Idle scan sürüyor. Wake kanalı hazır ve ambient veri akışı stabil.',
+            'Holographic mesh düşük güç modunda ama intent çözümleme her an devreye girebilir.',
+            'Ops browser standby konumunda. Güncel hedef istendiğinde önce araştırma akışı çalışır.',
+            'Telemetry sakin. Mikro reaksiyon motoru yeni komut için hazır bekliyor.',
+            'Parallax katmanları aktif. Core katmanı boşta bile yaşam sinyali veriyor.'
+        ];
+
+        const state = {
+            browser: {
+                url: 'about:blank',
+                title: 'Hazir',
+                source: 'system',
+                reason: 'startup'
+            },
+            ui: {
+                browserPanelVisible: true
+            },
+            health: null,
+            light: null,
+            spotify: null,
+            voice: null,
+            events: [],
+            browserLoading: false,
+            lastLoadedUrl: '',
+            lastActivityAt: Date.now(),
+            idleCursor: 0,
+            reactionTimer: 0
+        };
+
+        let statePollTimer = 0;
+        let browserReportTimer = 0;
+        let idleTelemetryTimer = 0;
+        let ws = null;
+
+        function truncate(text, max = 220) {
+            const value = String(text || '').trim();
+            if (!value) return '';
+            return value.length > max ? `${value.slice(0, max - 1)}...` : value;
+        }
+
+        function formatTime(value) {
+            const date = new Date(value || Date.now());
+            return Number.isNaN(date.getTime())
+                ? '--:--:--'
+                : date.toLocaleTimeString('tr-TR');
+        }
+
+        function looksLikeUrl(value = '') {
+            const safe = String(value || '').trim();
+            if (!safe) return false;
+            if (/^https?:\/\//i.test(safe)) return true;
+            return /^[a-z0-9-]+(\.[a-z0-9-]+)+([/?#].*)?$/i.test(safe);
+        }
+
+        async function request(pathname, options = {}) {
+            const response = await fetch(`${backendBase}${pathname}`, {
+                method: options.method || 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(options.headers || {})
+                },
+                body: options.body !== undefined ? JSON.stringify(options.body) : undefined
+            });
+            const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+            const payload = contentType.includes('application/json')
+                ? await response.json()
+                : await response.text();
+            if (!response.ok) {
+                throw new Error(payload?.message || payload?.error || `HTTP ${response.status}`);
+            }
+            return payload;
+        }
+
+        function touchActivity() {
+            state.lastActivityAt = Date.now();
+        }
+
+        function toneClass(ok, warn = false) {
+            if (ok) return 'tone-ok';
+            return warn ? 'tone-warn' : 'tone-bad';
+        }
+
+        function eventTypeLabel(type = '') {
+            const value = String(type || '').trim();
+            if (!value) return 'Event';
+            return value
+                .split('.')
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(' ');
+        }
+
+        function eventTone(type = '', payload = {}) {
+            if (/error|closed/i.test(type) || payload.ok === false) return 'tone-bad';
+            if (/dispatch|browser\.command|browser\.report/i.test(type) || state.browserLoading) return 'tone-warn';
+            return 'tone-ok';
+        }
+
+        function triggerReaction(type = 'idle', duration = 720) {
+            window.clearTimeout(state.reactionTimer);
+            shellEl.dataset.reaction = type;
+            if (type === 'idle') return;
+            state.reactionTimer = window.setTimeout(() => {
+                shellEl.dataset.reaction = 'idle';
+            }, duration);
+        }
+
+        function applyReactionForEvent(event = {}) {
+            const type = String(event.type || '');
+            const payload = event.payload || {};
+
+            if (payload.ok === false || /error|closed/i.test(type)) {
+                triggerReaction('glitch', 420);
+                return;
+            }
+
+            if (/dispatch/i.test(type)) {
+                triggerReaction('command', 420);
+                return;
+            }
+
+            if (/browser\.command|browser\.report|tool\.result/i.test(type)) {
+                triggerReaction('pulse', 900);
+            }
+        }
+
+        function pushEvent(event) {
+            if (!event || typeof event !== 'object') return;
+            touchActivity();
+            state.events = [event, ...state.events.filter((item) => item.id !== event.id)].slice(0, 50);
+            applyReactionForEvent(event);
+            renderEvents();
+            renderCore();
+        }
+
+        function summarizeEventPayload(event = {}) {
+            const payload = event.payload || {};
+            if (payload.browser?.url) {
+                return truncate(`${payload.browser.title || 'Browser'} | ${payload.browser.url}`, 180);
+            }
+            if (payload.tool) {
+                const summary = {
+                    tool: payload.tool,
+                    ok: payload.ok,
+                    status: payload.status,
+                    error: payload.error || null
+                };
+                return truncate(JSON.stringify(summary), 180);
+            }
+            return truncate(JSON.stringify(payload), 180);
+        }
+
+        function renderEvents() {
+            eventList.innerHTML = '';
+            if (!state.events.length) {
+                const empty = document.createElement('li');
+                empty.className = 'event-item';
+                empty.innerHTML = '<p class="event-title">Henüz event yok</p><p class="event-body">Bridge komutları veya browser hareketleri geldikçe burada görünecek.</p>';
+                eventList.appendChild(empty);
+                return;
+            }
+
+            state.events.forEach((event) => {
+                const item = document.createElement('li');
+                item.className = `event-item ${eventTone(event.type, event.payload)}`;
+                item.innerHTML = `
+                    <div class="event-meta">
+                        <span>${eventTypeLabel(event.type)}</span>
+                        <span>${formatTime(event.at)}</span>
+                    </div>
+                    <p class="event-title">${truncate(event.payload?.tool || event.payload?.browser?.title || eventTypeLabel(event.type), 64)}</p>
+                    <p class="event-body">${summarizeEventPayload(event)}</p>
+                `;
+                eventList.appendChild(item);
+            });
+        }
+
+        function renderStatus() {
+            const health = state.health || {};
+            const spotify = state.spotify || {};
+            const light = state.light || {};
+            const voice = state.voice || {};
+            const browser = state.browser || {};
+
+            const cards = [
+                {
+                    title: 'Backend',
+                    value: health.status === 'ok' ? 'Hazır' : 'Bağlantı Sorunu',
+                    detail: `OpenAI: ${health.openAiConfigured ? 'var' : 'yok'} | Deepgram: ${health.deepgramConfigured ? 'var' : 'yok'}`,
+                    className: toneClass(health.status === 'ok', true)
+                },
+                {
+                    title: 'Spotify',
+                    value: spotify.deviceReady ? 'Cihaz Hazır' : (spotify.authenticated ? 'Oturum Hazır' : 'Giriş Bekliyor'),
+                    detail: `${spotify.activeDeviceName || spotify.availableDeviceName || 'Aygıt yok'} | ${spotify.deviceCount || 0} cihaz`,
+                    className: toneClass(Boolean(spotify.ready || spotify.deviceReady), true)
+                },
+                {
+                    title: 'Light',
+                    value: light.connected ? 'Bağlı' : (light.configured ? 'Beklemede' : 'Kurulum Yok'),
+                    detail: `Reconnect: ${light.reconnectAttempt || 0} | Hata: ${truncate(light.lastError || 'yok', 48)}`,
+                    className: toneClass(Boolean(light.connected), Boolean(light.configured))
+                },
+                {
+                    title: 'Voice',
+                    value: String(voice.chip || 'Ses hazır'),
+                    detail: truncate(voice.detail || 'Voice overlay bekleniyor.', 80),
+                    className: toneClass(String(voice.tone || 'ok') === 'ok', true)
+                },
+                {
+                    title: 'Browser',
+                    value: state.browserLoading ? 'Yükleniyor' : 'Hazır',
+                    detail: truncate(browser.url || 'https://www.google.com/', 72),
+                    className: toneClass(Boolean(browser.url), true)
+                },
+                {
+                    title: 'Son Güncelleme',
+                    value: formatTime(health.time || browser.updatedAt || Date.now()),
+                    detail: `Source: ${browser.source || 'system'} | Reason: ${browser.reason || 'startup'}`,
+                    className: 'tone-ok'
+                }
+            ];
+
+            statusGrid.innerHTML = '';
+            cards.forEach((card) => {
+                const el = document.createElement('article');
+                el.className = `status-card ${card.className}`;
+                el.innerHTML = `<strong>${card.title}</strong><span>${card.value}</span><small>${card.detail}</small>`;
+                statusGrid.appendChild(el);
+            });
+        }
+
+        function idleLine(offset = 0) {
+            const index = (state.idleCursor + offset) % IDLE_LINES.length;
+            return IDLE_LINES[index];
+        }
+
+        function deriveCoreSnapshot() {
+            const latestEvent = state.events[0] || null;
+            const voiceMode = String(state.voice?.mode || '').trim().toLowerCase();
+            const sinceActivity = Date.now() - state.lastActivityAt;
+
+            if (latestEvent?.payload?.ok === false || /error|closed/i.test(String(latestEvent?.type || ''))) {
+                return {
+                    mode: 'glitch',
+                    kicker: 'Glitch Recovery',
+                    title: 'Sistem anomali tespit etti',
+                    detail: truncate(latestEvent?.payload?.error || 'Son işlem beklenmeyen bir hata verdi. HADES yeniden dengeleme yapıyor.', 180),
+                    intent: 'Recovering Signal',
+                    latency: `${Math.max(120, sinceActivity)} ms`
+                };
+            }
+
+            if (state.browserLoading) {
+                return {
+                    mode: 'processing',
+                    kicker: 'Processing Intent',
+                    title: 'Canlı web hedefi çözülüyor',
+                    detail: 'Browser ve resolver katmanı güncel sonucu doğrulayıp nihai hedefi hazırlıyor.',
+                    intent: 'Resolving Current Target',
+                    latency: `${Math.max(80, sinceActivity)} ms`
+                };
+            }
+
+            if (/dispatch/i.test(String(latestEvent?.type || ''))) {
+                return {
+                    mode: 'processing',
+                    kicker: 'Tool Dispatch',
+                    title: `${latestEvent?.payload?.tool || 'Araç'} yürütülüyor`,
+                    detail: 'Mikro reaksiyon motoru komut akışını izliyor ve AI core orkestrasyonu sürüyor.',
+                    intent: 'Executing Action',
+                    latency: `${Math.max(60, sinceActivity)} ms`
+                };
+            }
+
+            if (/browser\.command/i.test(String(latestEvent?.type || ''))) {
+                const selected = latestEvent?.payload?.resolution?.selected;
+                return {
+                    mode: 'search',
+                    kicker: 'Web Resolve',
+                    title: truncate(selected?.title || latestEvent?.payload?.browser?.title || 'Nihai hedef açılıyor', 92),
+                    detail: truncate(selected?.url || latestEvent?.payload?.browser?.url || 'Araştırma sonucu browsera aktarılıyor.', 180),
+                    intent: 'Opening Verified Result',
+                    latency: `${Math.max(40, sinceActivity)} ms`
+                };
+            }
+
+            if (/tool\.result/i.test(String(latestEvent?.type || ''))) {
+                return {
+                    mode: 'stable',
+                    kicker: 'Response Pulse',
+                    title: `${latestEvent?.payload?.tool || 'İşlem'} tamamlandı`,
+                    detail: latestEvent?.payload?.ok === false
+                        ? truncate(latestEvent?.payload?.error || 'İşlem başarısız oldu.', 180)
+                        : 'Son komut başarıyla işlendi ve sistem stabil moda döndü.',
+                    intent: latestEvent?.payload?.ok === false ? 'Result Failed' : 'Result Confirmed',
+                    latency: `${Math.max(28, sinceActivity)} ms`
+                };
+            }
+
+            if (voiceMode === 'wake') {
+                return {
+                    mode: 'listening',
+                    kicker: 'Wake Listener',
+                    title: 'HADES dinlemede',
+                    detail: truncate(state.voice?.detail || '"HADES" denmesini bekliyor.', 180),
+                    intent: 'Listening For Wake Word',
+                    latency: 'Realtime'
+                };
+            }
+
+            if (voiceMode === 'speaking' || voiceMode === 'reply') {
+                return {
+                    mode: 'responding',
+                    kicker: 'Response Pulse',
+                    title: 'Yanıt aktarılıyor',
+                    detail: truncate(state.voice?.detail || 'Ses ve yanıt hattı aktif.', 180),
+                    intent: 'Streaming Response',
+                    latency: 'Live'
+                };
+            }
+
+            return {
+                mode: 'idle',
+                kicker: 'Idle Intelligence',
+                title: 'HADES hazır',
+                detail: idleLine(0),
+                intent: 'Awaiting Intent',
+                latency: sinceActivity < 1000 ? `${sinceActivity} ms` : `${Math.round(sinceActivity / 1000)} s`
+            };
+        }
+
+        function renderCore() {
+            const snapshot = deriveCoreSnapshot();
+            shellEl.dataset.coreMode = snapshot.mode;
+
+            coreKicker.textContent = snapshot.kicker;
+            coreTitle.textContent = snapshot.title;
+            coreDetail.textContent = snapshot.detail;
+            coreModeValue.textContent = snapshot.kicker;
+            coreIntentValue.textContent = snapshot.intent;
+            coreLatencyValue.textContent = snapshot.latency;
+            coreModePill.textContent = snapshot.kicker;
+            coreIntentPill.textContent = snapshot.intent;
+
+            coreFeed.innerHTML = '';
+            const feedItems = state.events.slice(0, 3).map((event) => ({
+                tone: eventTone(event.type, event.payload),
+                title: truncate(eventTypeLabel(event.type), 40),
+                text: summarizeEventPayload(event),
+                time: formatTime(event.at)
+            }));
+
+            while (feedItems.length < 4) {
+                const offset = feedItems.length;
+                feedItems.push({
+                    tone: 'tone-ok',
+                    title: offset === 0 ? snapshot.kicker : `Ambient Telemetry ${offset}`,
+                    text: idleLine(offset),
+                    time: formatTime(Date.now() - offset * 1400)
+                });
+            }
+
+            feedItems.slice(0, 4).forEach((item) => {
+                const li = document.createElement('li');
+                li.className = item.tone || 'tone-ok';
+                li.innerHTML = `
+                    <span class="feed-dot"></span>
+                    <div class="feed-copy">
+                        <p class="feed-title">${item.title}</p>
+                        <p class="feed-text">${item.text}</p>
+                    </div>
+                    <span class="feed-time">${item.time}</span>
+                `;
+                coreFeed.appendChild(li);
+            });
+        }
+
+        function renderBrowserMeta() {
+            const browser = state.browser || {};
+            const title = truncate(browser.title || 'Hazır', 96);
+            const url = truncate(browser.url || 'https://www.google.com/', 160);
+            browserMeta.innerHTML = `<strong>${title}</strong><br>${url}<br>Kaynak: ${browser.source || 'system'} | Sebep: ${browser.reason || 'startup'}`;
+            if (addressInput && document.activeElement !== addressInput) {
+                addressInput.value = browser.query || browser.url || '';
+            }
+            if (browserStatusLabel) {
+                browserStatusLabel.textContent = state.browserLoading
+                    ? 'Resolving Target'
+                    : (state.ui.browserPanelVisible === false ? 'Dock Minimized' : 'Standby');
+            }
+        }
+
+        function applyUiState(ui = {}) {
+            state.ui = {
+                ...state.ui,
+                ...ui
+            };
+            const visible = state.ui.browserPanelVisible !== false;
+            if (layoutEl) {
+                layoutEl.dataset.browserCollapsed = visible ? 'false' : 'true';
+            }
+            if (browserShellEl) {
+                browserShellEl.dataset.collapsed = visible ? 'false' : 'true';
+            }
+            if (toggleBrowserPanelButton) {
+                toggleBrowserPanelButton.textContent = visible ? 'Browser Küçült' : 'Browser Aç';
+            }
+            if (toggleBrowserDockButton) {
+                toggleBrowserDockButton.textContent = visible ? 'Browser KÃ¼Ã§Ã¼lt' : 'Browser AÃ§';
+            }
+            if (toggleBrowserPanelButton) {
+                toggleBrowserPanelButton.textContent = visible ? 'Browser Kucult' : 'Browser Ac';
+            }
+            if (toggleBrowserDockButton) {
+                toggleBrowserDockButton.textContent = visible ? 'Browser Kucult' : 'Browser Ac';
+            }
+            renderBrowserMeta();
+            renderCore();
+        }
+
+        function applyBrowserTarget(browser = {}, options = {}) {
+            const nextUrl = String(browser.url || '').trim();
+            if (!nextUrl) return;
+            state.browser = {
+                ...state.browser,
+                ...browser
+            };
+            renderBrowserMeta();
+            renderStatus();
+            renderCore();
+            if (options.skipLoad) return;
+            if (state.lastLoadedUrl === nextUrl) return;
+            state.lastLoadedUrl = nextUrl;
+            browserEl.src = nextUrl;
+        }
+
+        async function loadState(force = false) {
+            try {
+                const payload = await request('/ops/state');
+                const nextState = payload.state || {};
+                state.health = nextState.health || null;
+                state.light = nextState.light || null;
+                state.spotify = nextState.spotify || null;
+                state.voice = nextState.voice || null;
+                applyUiState(nextState.ui || state.ui);
+                state.events = Array.isArray(nextState.recentEvents) ? nextState.recentEvents : state.events;
+                connectionPill.textContent = 'Backend bağlı';
+                applyBrowserTarget(nextState.browser || state.browser, { skipLoad: !force && Boolean(state.lastLoadedUrl) });
+                renderStatus();
+                renderEvents();
+                renderCore();
+            } catch (error) {
+                connectionPill.textContent = `Backend hata: ${truncate(error.message || 'bağlanamadı', 40)}`;
+                connectionPill.style.color = '#ffca6b';
+                triggerReaction('glitch', 420);
+            }
+        }
+
+        function scheduleStatePoll() {
+            window.clearInterval(statePollTimer);
+            statePollTimer = window.setInterval(() => {
+                void loadState(false);
+            }, 3000);
+        }
+
+        function scheduleBrowserReport(reason = 'navigated') {
+            window.clearTimeout(browserReportTimer);
+            browserReportTimer = window.setTimeout(async () => {
+                const url = browserEl.getURL ? browserEl.getURL() : state.browser.url;
+                const title = browserEl.getTitle ? browserEl.getTitle() : state.browser.title;
+                if (!url || url === 'about:blank') return;
+                try {
+                    await request('/ops/browser/report', {
+                        method: 'POST',
+                        body: {
+                            url,
+                            title,
+                            source: 'cockpit',
+                            reason
+                        }
+                    });
+                } catch (_) {
+                    // Sessizce devam et.
+                }
+            }, 220);
+        }
+
+        async function openBrowserTarget(inputValue, mode = 'smart') {
+            const value = String(inputValue || '').trim();
+            if (!value) return;
+            touchActivity();
+            triggerReaction('command', 420);
+            const body = looksLikeUrl(value) && mode !== 'search'
+                ? { url: value, source: 'cockpit', reason: 'manual_open' }
+                : { query: value, source: 'cockpit', reason: 'manual_search' };
+            const payload = await request('/ops/browser/open', {
+                method: 'POST',
+                body
+            });
+            if (payload.ui) {
+                applyUiState(payload.ui);
+            }
+            applyBrowserTarget(payload.browser || {}, { skipLoad: false });
+        }
+
+        async function setBrowserPanelVisible(visible) {
+            const payload = await request('/ops/ui-state', {
+                method: 'POST',
+                body: {
+                    browserPanelVisible: Boolean(visible)
+                }
+            });
+            applyUiState(payload.ui || {});
+            renderStatus();
+        }
+
+        function connectEvents() {
+            try {
+                ws = new WebSocket(`${wsBase}/ops/events`);
+            } catch (_) {
+                return;
+            }
+
+            ws.addEventListener('open', () => {
+                connectionPill.textContent = 'Event stream bağlı';
+                connectionPill.style.color = '#7fe3b8';
+            });
+
+            ws.addEventListener('message', (event) => {
+                let payload = null;
+                try {
+                    payload = JSON.parse(String(event.data || '{}'));
+                } catch (_) {
+                    return;
+                }
+
+                if (payload.type === 'ops:snapshot') {
+                    if (payload.browser) {
+                        applyBrowserTarget(payload.browser, { skipLoad: false });
+                    }
+                    if (payload.ui) {
+                        applyUiState(payload.ui);
+                    }
+                    if (Array.isArray(payload.recentEvents)) {
+                        state.events = payload.recentEvents;
+                        renderEvents();
+                        renderCore();
+                    }
+                    return;
+                }
+
+                if (payload.type === 'ops:event' && payload.event) {
+                    pushEvent(payload.event);
+                    if (payload.event.type === 'ops.ui' && payload.event.payload?.ui) {
+                        applyUiState(payload.event.payload.ui);
+                    }
+                    if (/^browser\./.test(String(payload.event.type || '')) && payload.event.payload?.browser) {
+                        applyBrowserTarget(payload.event.payload.browser, {
+                            skipLoad: String(payload.event.type || '') === 'browser.report'
+                        });
+                    }
+                }
+            });
+
+            const reconnect = () => {
+                connectionPill.textContent = 'Event stream yeniden bağlanıyor';
+                connectionPill.style.color = '#ffca6b';
+                window.setTimeout(connectEvents, 1600);
+            };
+
+            ws.addEventListener('close', reconnect, { once: true });
+            ws.addEventListener('error', reconnect, { once: true });
+        }
+
+        function buildVisuals() {
+            tokenStream.innerHTML = '';
+            waveBars.innerHTML = '';
+
+            for (let index = 0; index < 18; index += 1) {
+                const token = document.createElement('span');
+                token.style.setProperty('--delay', `${(index * 0.21).toFixed(2)}s`);
+                token.style.setProperty('--duration', `${4 + (index % 5) * 0.6}s`);
+                token.style.setProperty('--x', `${10 + ((index * 19) % 78)}%`);
+                token.style.setProperty('--y', `${16 + ((index * 13) % 68)}%`);
+                token.style.setProperty('--drift-x', `${-56 + ((index * 17) % 112)}px`);
+                token.style.setProperty('--drift-y', `${-48 + ((index * 23) % 96)}px`);
+                tokenStream.appendChild(token);
+            }
+
+            for (let index = 0; index < 18; index += 1) {
+                const bar = document.createElement('span');
+                bar.style.setProperty('--delay', `${(index * 0.08).toFixed(2)}s`);
+                waveBars.appendChild(bar);
+            }
+        }
+
+        function startIdleTelemetry() {
+            window.clearInterval(idleTelemetryTimer);
+            idleTelemetryTimer = window.setInterval(() => {
+                state.idleCursor = (state.idleCursor + 1) % IDLE_LINES.length;
+                renderCore();
+            }, 2800);
+        }
+
+        function setPointerDepth(event) {
+            const x = (event.clientX / window.innerWidth - 0.5) * 2;
+            const y = (event.clientY / window.innerHeight - 0.5) * 2;
+            document.documentElement.style.setProperty('--pointer-x', x.toFixed(3));
+            document.documentElement.style.setProperty('--pointer-y', y.toFixed(3));
+        }
+
+        browserEl.addEventListener('did-start-loading', () => {
+            state.browserLoading = true;
+            touchActivity();
+            browserShellEl.dataset.loading = 'true';
+            triggerReaction('pulse', 980);
+            renderStatus();
+            renderCore();
+        });
+
+        browserEl.addEventListener('did-stop-loading', () => {
+            state.browserLoading = false;
+            touchActivity();
+            browserShellEl.dataset.loading = 'false';
+            renderStatus();
+            renderCore();
+            scheduleBrowserReport('loaded');
+        });
+
+        browserEl.addEventListener('did-navigate', () => scheduleBrowserReport('navigated'));
+        browserEl.addEventListener('did-navigate-in-page', () => scheduleBrowserReport('in_page'));
+        browserEl.addEventListener('page-title-updated', () => scheduleBrowserReport('title'));
+
+        addressForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            void openBrowserTarget(addressInput.value, 'smart');
+        });
+
+        searchButton.addEventListener('click', () => {
+            void openBrowserTarget(addressInput.value, 'search');
+        });
+
+        backButton.addEventListener('click', () => {
+            if (browserEl.canGoBack && browserEl.canGoBack()) {
+                browserEl.goBack();
+            }
+        });
+
+        forwardButton.addEventListener('click', () => {
+            if (browserEl.canGoForward && browserEl.canGoForward()) {
+                browserEl.goForward();
+            }
+        });
+
+        reloadButton.addEventListener('click', () => {
+            browserEl.reload();
+        });
+
+        openExternalButton.addEventListener('click', () => {
+            const currentUrl = browserEl.getURL ? browserEl.getURL() : state.browser.url;
+            if (!currentUrl) return;
+            try {
+                window.HADESDesktop && window.HADESDesktop.openExternal && window.HADESDesktop.openExternal(currentUrl);
+            } catch (_) {
+                // Sessizce devam et.
+            }
+        });
+
+        restoreMainButton.addEventListener('click', () => {
+            try {
+                window.HADESDesktop && window.HADESDesktop.restoreMainWindow && window.HADESDesktop.restoreMainWindow();
+            } catch (_) {
+                // Sessizce devam et.
+            }
+        });
+
+        minimizeCockpitButton.addEventListener('click', () => {
+            try {
+                window.HADESDesktop && window.HADESDesktop.minimizeCurrentWindow && window.HADESDesktop.minimizeCurrentWindow();
+            } catch (_) {
+                // Sessizce devam et.
+            }
+        });
+
+        refreshStateButton.addEventListener('click', () => {
+            void loadState(true);
+        });
+
+        toggleBrowserPanelButton.addEventListener('click', () => {
+            void setBrowserPanelVisible(state.ui.browserPanelVisible === false);
+        });
+
+        if (toggleBrowserDockButton) {
+            toggleBrowserDockButton.addEventListener('click', () => {
+                void setBrowserPanelVisible(state.ui.browserPanelVisible === false);
+            });
+        }
+
+        document.querySelectorAll('.quick-link').forEach((button) => {
+            button.addEventListener('click', () => {
+                void openBrowserTarget(button.dataset.target || '', 'open');
+            });
+        });
+
+        window.addEventListener('pointermove', setPointerDepth, { passive: true });
+
+        renderStatus();
+        renderEvents();
+        renderBrowserMeta();
+        renderCore();
+        buildVisuals();
+        applyUiState(state.ui);
+        void loadState(true);
+        startIdleTelemetry();
+        scheduleStatePoll();
+        connectEvents();
+
+        window.addEventListener('beforeunload', () => {
+            window.clearInterval(statePollTimer);
+            window.clearInterval(idleTelemetryTimer);
+            window.clearTimeout(browserReportTimer);
+            window.clearTimeout(state.reactionTimer);
+            if (ws) {
+                try { ws.close(); } catch (_) {}
+            }
+        });
+    </script>
+</body>
+</html>

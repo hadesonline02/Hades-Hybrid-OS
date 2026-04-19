@@ -1,0 +1,966 @@
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>HADES Ambient</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --cyan: #7de6ff;
+            --teal: #38c7d6;
+            --ink: rgba(2, 7, 15, 0.05);
+            --panel: rgba(3, 9, 18, 0.08);
+            --panel-strong: rgba(3, 8, 16, 0.14);
+            --line: rgba(125, 230, 255, 0.09);
+            --glow: 0 0 34px rgba(125, 230, 255, 0.04);
+            --warn: #ffb86b;
+            --danger: #ff7a7a;
+            --text-soft: rgba(191, 222, 232, 0.58);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: transparent;
+            font-family: "Segoe UI", "Inter", sans-serif;
+            color: rgba(236, 248, 255, 0.94);
+        }
+
+        body {
+            position: relative;
+            text-rendering: optimizeLegibility;
+            letter-spacing: 0.02em;
+        }
+
+        html[data-wallpaper-attached="true"] body {
+            background:
+                radial-gradient(circle at 50% 46%, rgba(7, 22, 36, 0.82), rgba(2, 8, 14, 0.92) 58%, rgba(1, 5, 10, 0.97) 100%);
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+        }
+
+        body::before {
+            background:
+                radial-gradient(circle at 50% 50%, rgba(36, 119, 156, 0.025), transparent 30%),
+                radial-gradient(circle at 18% 22%, rgba(32, 92, 119, 0.02), transparent 16%),
+                radial-gradient(circle at 82% 78%, rgba(15, 51, 102, 0.02), transparent 20%),
+                linear-gradient(180deg, rgba(2, 7, 14, 0.015), rgba(1, 4, 8, 0.04));
+            filter: blur(10px);
+            opacity: 0.72;
+        }
+
+        html[data-wallpaper-attached="true"] body::before {
+            background:
+                radial-gradient(circle at 50% 50%, rgba(36, 119, 156, 0.14), transparent 34%),
+                radial-gradient(circle at 18% 22%, rgba(32, 92, 119, 0.12), transparent 20%),
+                radial-gradient(circle at 82% 78%, rgba(15, 51, 102, 0.10), transparent 24%),
+                linear-gradient(180deg, rgba(2, 7, 14, 0.28), rgba(1, 4, 8, 0.56));
+            filter: blur(18px);
+            opacity: 1;
+        }
+
+        body::after {
+            background:
+                linear-gradient(rgba(124, 247, 255, 0.028) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(124, 247, 255, 0.022) 1px, transparent 1px);
+            background-size: clamp(28px, 3vw, 42px) clamp(28px, 3vw, 42px);
+            mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.95), transparent 90%);
+            opacity: 0.08;
+        }
+
+        html[data-wallpaper-attached="true"] body::after {
+            opacity: 0.12;
+        }
+
+        .scene {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .vignette,
+        .scanline,
+        .edge-aura {
+            position: absolute;
+            inset: 0;
+        }
+
+        .vignette {
+            background: radial-gradient(circle at center, transparent 56%, rgba(2, 8, 14, 0.04) 100%);
+        }
+
+        html[data-wallpaper-attached="true"] .vignette {
+            background: radial-gradient(circle at center, transparent 48%, rgba(2, 8, 14, 0.22) 100%);
+        }
+
+        .scanline {
+            opacity: 0.03;
+            background-image: linear-gradient(to bottom, rgba(255,255,255,0.06), transparent 35%);
+            background-size: 100% 7px;
+            animation: scan-drift 18s linear infinite;
+        }
+
+        .edge-aura {
+            background:
+                linear-gradient(90deg, rgba(124,247,255,0.05), transparent 18%, transparent 82%, rgba(124,247,255,0.04)),
+                linear-gradient(rgba(124,247,255,0.03), transparent 18%, transparent 84%, rgba(124,247,255,0.02));
+            opacity: 0.12;
+        }
+
+        html[data-wallpaper-attached="true"] .edge-aura {
+            opacity: 0.2;
+        }
+
+        .status-ribbon {
+            position: absolute;
+            top: clamp(18px, 2vw, 32px);
+            left: clamp(18px, 2vw, 32px);
+            right: clamp(18px, 2vw, 32px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .ribbon-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .pill {
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(7, 17, 31, 0.05);
+            box-shadow: inset 0 0 14px rgba(124, 247, 255, 0.03), var(--glow);
+            font-size: clamp(11px, 0.75vw, 13px);
+            text-transform: uppercase;
+        }
+
+        .pill strong {
+            color: var(--cyan);
+            margin-left: 6px;
+            font-weight: 700;
+        }
+
+        .centerpiece {
+            position: absolute;
+            inset: 50% auto auto 50%;
+            transform: translate(-50%, -50%);
+            width: min(48vw, 760px);
+            aspect-ratio: 1;
+            display: grid;
+            place-items: center;
+        }
+
+        html[data-multidisplay="true"] .centerpiece {
+            opacity: 0.42;
+            transform: translate(-50%, -50%) scale(0.76);
+        }
+
+        .ring,
+        .ring::before,
+        .ring::after,
+        .core {
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        .ring {
+            border: 1px solid rgba(124, 247, 255, 0.2);
+            box-shadow: inset 0 0 24px rgba(124, 247, 255, 0.03), 0 0 40px rgba(56, 190, 255, 0.06);
+            animation: rotate-slow 18s linear infinite;
+        }
+
+        .ring-a { inset: 10%; }
+        .ring-b { inset: 20%; animation-direction: reverse; animation-duration: 26s; border-style: dashed; }
+        .ring-c { inset: 31%; animation-duration: 12s; opacity: 0.8; }
+
+        .core {
+            inset: 39%;
+            background:
+                radial-gradient(circle at 35% 30%, rgba(255,255,255,0.7), rgba(124,247,255,0.28) 18%, rgba(44,140,214,0.12) 42%, rgba(2,6,12,0.015) 78%),
+                radial-gradient(circle at 50% 50%, rgba(73, 216, 255, 0.12), rgba(2, 8, 14, 0.01) 72%);
+            box-shadow:
+                0 0 60px rgba(97, 230, 255, 0.12),
+                0 0 110px rgba(36, 117, 255, 0.08);
+            animation: core-pulse 3.6s ease-in-out infinite;
+        }
+
+        .orbit {
+            position: absolute;
+            inset: 0;
+            animation: rotate-slow 22s linear infinite;
+        }
+
+        .satellite {
+            position: absolute;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #c8fdff, rgba(124, 247, 255, 0.08));
+            box-shadow: 0 0 18px rgba(124, 247, 255, 0.48);
+        }
+
+        .satellite.s1 { top: 10%; left: 49%; }
+        .satellite.s2 { right: 18%; top: 56%; width: 8px; height: 8px; }
+        .satellite.s3 { left: 18%; bottom: 24%; width: 9px; height: 9px; }
+
+        .waveband {
+            position: absolute;
+            bottom: 12%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: flex-end;
+            gap: clamp(4px, 0.4vw, 8px);
+            width: min(34vw, 520px);
+            justify-content: center;
+        }
+
+        .bar {
+            width: clamp(4px, 0.4vw, 7px);
+            border-radius: 999px;
+            background: linear-gradient(to top, rgba(22, 102, 176, 0.18), rgba(124, 247, 255, 0.86));
+            box-shadow: 0 0 16px rgba(124, 247, 255, 0.2);
+            animation: wave 1.7s ease-in-out infinite;
+        }
+
+        .monitor-relay-grid {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .monitor-relay {
+            position: absolute;
+            left: var(--x, 50%);
+            top: 54%;
+            width: var(--size, 180px);
+            height: var(--size, 180px);
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            border: 1px solid rgba(124, 247, 255, 0.16);
+            box-shadow:
+                inset 0 0 22px rgba(124, 247, 255, 0.05),
+                0 0 30px rgba(74, 189, 255, 0.10);
+            animation: relay-pulse 4.8s ease-in-out infinite;
+            animation-delay: var(--delay, 0s);
+        }
+
+        .monitor-relay::before,
+        .monitor-relay::after {
+            content: "";
+            position: absolute;
+            inset: 18%;
+            border-radius: 50%;
+        }
+
+        .monitor-relay::before {
+            border: 1px dashed rgba(124, 247, 255, 0.12);
+            animation: rotate-slow 14s linear infinite reverse;
+        }
+
+        .monitor-relay::after {
+            inset: 34%;
+            background: radial-gradient(circle, rgba(124, 247, 255, 0.42), rgba(124, 247, 255, 0.02) 72%);
+            box-shadow: 0 0 28px rgba(124, 247, 255, 0.12);
+        }
+
+        .dock,
+        .feed {
+            position: absolute;
+            width: min(26vw, 360px);
+            padding: clamp(16px, 1.3vw, 22px);
+            border-radius: 24px;
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(4, 10, 18, 0.05), rgba(2, 7, 14, 0.08));
+            backdrop-filter: blur(2px);
+            box-shadow: inset 0 0 18px rgba(124, 247, 255, 0.02), var(--glow);
+            pointer-events: none;
+        }
+
+        .dock {
+            left: clamp(24px, 2.5vw, 42px);
+            bottom: clamp(24px, 3vw, 42px);
+        }
+
+        .feed {
+            right: clamp(24px, 2.5vw, 42px);
+            top: 50%;
+            transform: translateY(-40%);
+        }
+
+        .section-title {
+            margin: 0 0 14px;
+            font-size: clamp(12px, 0.85vw, 14px);
+            text-transform: uppercase;
+            letter-spacing: 0.22em;
+            color: rgba(162, 235, 255, 0.82);
+        }
+
+        .metric {
+            display: grid;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .metric:last-child {
+            margin-bottom: 0;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: rgba(164, 201, 214, 0.7);
+        }
+
+        .metric-value {
+            font-size: clamp(16px, 1.15vw, 20px);
+            font-weight: 600;
+            color: rgba(241, 251, 255, 0.96);
+            text-shadow: 0 0 14px rgba(124, 247, 255, 0.12);
+        }
+
+        .metric-meta,
+        .event-time {
+            font-size: 12px;
+            color: rgba(174, 210, 223, 0.74);
+        }
+
+        .event-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .event-row {
+            padding: 10px 12px;
+            border-radius: 16px;
+            border: 1px solid rgba(124, 247, 255, 0.1);
+            background: rgba(8, 19, 34, 0.04);
+        }
+
+        .event-type {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--cyan);
+            margin-bottom: 4px;
+        }
+
+        .thought-stream {
+            position: absolute;
+            left: 50%;
+            top: 18%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            width: min(58vw, 820px);
+        }
+
+        .token {
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(124, 247, 255, 0.12);
+            background: rgba(9, 20, 34, 0.025);
+            color: rgba(210, 241, 255, 0.88);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            animation: float-token 5.6s ease-in-out infinite;
+        }
+
+        html[data-wallpaper-attached="true"] .status-ribbon,
+        html[data-wallpaper-attached="true"] .thought-stream,
+        html[data-wallpaper-attached="true"] .footer {
+            opacity: 0.74;
+        }
+
+        html[data-wallpaper-attached="true"] .dock,
+        html[data-wallpaper-attached="true"] .feed {
+            background: linear-gradient(180deg, rgba(4, 10, 18, 0.035), rgba(2, 7, 14, 0.055));
+            border-color: rgba(125, 230, 255, 0.06);
+            box-shadow: inset 0 0 12px rgba(124, 247, 255, 0.015), 0 0 20px rgba(125, 230, 255, 0.025);
+        }
+
+        .footer {
+            position: absolute;
+            left: clamp(24px, 2.5vw, 42px);
+            right: clamp(24px, 2.5vw, 42px);
+            bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: rgba(173, 213, 222, 0.56);
+        }
+
+        .control-cluster {
+            display: none;
+        }
+
+        html[data-wallpaper-attached="true"] .control-cluster {
+            display: none;
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .control-btn {
+            appearance: none;
+            border: 1px solid rgba(125, 230, 255, 0.16);
+            background: linear-gradient(180deg, rgba(10, 22, 38, 0.96), rgba(6, 13, 25, 0.98));
+            color: rgba(235, 248, 255, 0.94);
+            border-radius: 16px;
+            min-height: 48px;
+            padding: 12px 14px;
+            text-align: left;
+            font: inherit;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            cursor: pointer;
+            transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+            pointer-events: auto;
+        }
+
+        .control-btn:hover,
+        .control-btn:focus-visible {
+            outline: none;
+            transform: translateY(-1px);
+            border-color: rgba(125, 230, 255, 0.34);
+            box-shadow: 0 0 20px rgba(125, 230, 255, 0.12);
+        }
+
+        .control-meta {
+            margin-top: 12px;
+            font-size: 11px;
+            color: var(--text-soft);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        html[data-primary="false"] .feed {
+            width: min(20vw, 280px);
+            transform: translateY(-50%);
+            opacity: 0.46;
+        }
+
+        html[data-primary="false"] .dock .metric:nth-child(n+4) {
+            display: none;
+        }
+
+        html[data-primary="false"] .thought-stream {
+            width: min(46vw, 480px);
+            top: 21%;
+        }
+
+        html[data-primary="false"] .dock,
+        html[data-primary="false"] .feed {
+            background: linear-gradient(180deg, rgba(4, 10, 18, 0.025), rgba(2, 7, 14, 0.04));
+            opacity: 0.58;
+        }
+
+        @media (max-width: 1180px), (max-height: 760px) {
+            .feed {
+                width: min(30vw, 300px);
+            }
+
+            .dock {
+                width: min(30vw, 300px);
+            }
+
+            .thought-stream {
+                top: 13%;
+                width: min(72vw, 620px);
+            }
+
+        }
+
+        @keyframes rotate-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes core-pulse {
+            0%, 100% { transform: scale(0.98); filter: saturate(1); }
+            50% { transform: scale(1.06); filter: saturate(1.22); }
+        }
+
+        @keyframes wave {
+            0%, 100% { height: 18px; opacity: 0.36; }
+            50% { height: 74px; opacity: 1; }
+        }
+
+        @keyframes float-token {
+            0%, 100% { transform: translateY(0px); opacity: 0.54; }
+            50% { transform: translateY(-8px); opacity: 1; }
+        }
+
+        @keyframes scan-drift {
+            from { transform: translateY(-12px); }
+            to { transform: translateY(12px); }
+        }
+
+        @keyframes relay-pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(0.94); opacity: 0.46; }
+            50% { transform: translate(-50%, -50%) scale(1.04); opacity: 0.88; }
+        }
+    </style>
+</head>
+<body>
+    <div class="scene">
+        <div class="edge-aura"></div>
+        <div class="scanline"></div>
+        <div class="vignette"></div>
+
+        <div class="status-ribbon">
+            <div class="ribbon-group">
+                <div class="pill">HADES <strong>ambient</strong></div>
+                <div class="pill" id="monitor-pill">display</div>
+                <div class="pill" id="voice-pill">wake standby</div>
+            </div>
+            <div class="ribbon-group">
+                <div class="pill" id="backend-pill">backend sync</div>
+                <div class="pill" id="clock-pill">--:--:--</div>
+            </div>
+        </div>
+
+        <div class="thought-stream" id="thought-stream"></div>
+        <div class="monitor-relay-grid" id="monitor-relay-grid"></div>
+
+        <div class="centerpiece">
+            <div class="ring ring-a"></div>
+            <div class="ring ring-b"></div>
+            <div class="ring ring-c"></div>
+            <div class="orbit">
+                <div class="satellite s1"></div>
+                <div class="satellite s2"></div>
+                <div class="satellite s3"></div>
+            </div>
+            <div class="core"></div>
+            <div class="waveband" id="waveband"></div>
+        </div>
+
+        <section class="dock">
+            <h2 class="section-title">System feed</h2>
+            <div class="metric">
+                <div class="metric-label">Voice</div>
+                <div class="metric-value" id="voice-value">Wake standby</div>
+                <div class="metric-meta" id="voice-detail">"HADES" ile dinlemeye gececek.</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Browser target</div>
+                <div class="metric-value" id="browser-value">No active target</div>
+                <div class="metric-meta" id="browser-detail">Tarayici hedefi bekleniyor.</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Spotify</div>
+                <div class="metric-value" id="spotify-value">Not linked</div>
+                <div class="metric-meta" id="spotify-detail">Baglanti yok.</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Cockpit</div>
+                <div class="metric-value" id="cockpit-value">Ctrl+Shift+O</div>
+                <div class="metric-meta">Ana pencereyi geri getirmek icin Ctrl+Shift+H.</div>
+            </div>
+        </section>
+
+        <section class="feed">
+            <h2 class="section-title">Recent telemetry</h2>
+            <div class="event-list" id="event-list"></div>
+        </section>
+
+        <section class="control-cluster">
+            <h2 class="section-title">Control Deck</h2>
+            <div class="control-grid">
+                <button class="control-btn" id="open-cockpit-btn" type="button">Ops Cockpit</button>
+                <button class="control-btn" id="minimize-cockpit-btn" type="button">Cockpit Kucult</button>
+                <button class="control-btn" id="restore-main-btn" type="button">Ana Pencere</button>
+                <button class="control-btn" id="hide-ambient-btn" type="button">Ambient Kapat</button>
+            </div>
+            <div class="control-meta" id="control-meta">Wallpaper host baglanmaya hazirlaniyor.</div>
+        </section>
+
+        <div class="footer">
+            <span id="footer-left">desktop aura active</span>
+            <span id="footer-right">Ctrl+Shift+D ambient toggle</span>
+        </div>
+    </div>
+
+    <script>
+        const backendBase = window.HADESDesktop?.backendBase || 'http://127.0.0.1:3001';
+        const wsBase = backendBase.replace(/^http/i, 'ws');
+        const params = new URLSearchParams(window.location.search);
+        const state = {
+            display: parseDisplay(params),
+            snapshot: null,
+            events: [],
+            socket: null,
+            connected: false,
+            wallpaperAttached: false
+        };
+
+        const refs = {
+            monitorPill: document.getElementById('monitor-pill'),
+            voicePill: document.getElementById('voice-pill'),
+            backendPill: document.getElementById('backend-pill'),
+            clockPill: document.getElementById('clock-pill'),
+            voiceValue: document.getElementById('voice-value'),
+            voiceDetail: document.getElementById('voice-detail'),
+            browserValue: document.getElementById('browser-value'),
+            browserDetail: document.getElementById('browser-detail'),
+            spotifyValue: document.getElementById('spotify-value'),
+            spotifyDetail: document.getElementById('spotify-detail'),
+            cockpitValue: document.getElementById('cockpit-value'),
+            footerLeft: document.getElementById('footer-left'),
+            footerRight: document.getElementById('footer-right'),
+            eventList: document.getElementById('event-list'),
+            thoughtStream: document.getElementById('thought-stream'),
+            monitorRelayGrid: document.getElementById('monitor-relay-grid'),
+            waveband: document.getElementById('waveband'),
+            controlMeta: document.getElementById('control-meta'),
+            openCockpitBtn: document.getElementById('open-cockpit-btn'),
+            minimizeCockpitBtn: document.getElementById('minimize-cockpit-btn'),
+            restoreMainBtn: document.getElementById('restore-main-btn'),
+            hideAmbientBtn: document.getElementById('hide-ambient-btn')
+        };
+
+        function parseDisplay(source) {
+            return {
+                id: String(source.get('displayId') || ''),
+                index: Math.max(0, Number(source.get('index') || 0)),
+                total: Math.max(1, Number(source.get('total') || 1)),
+                label: String(source.get('label') || ''),
+                primary: source.get('primary') === '1',
+                width: Math.max(320, Number(source.get('width') || window.innerWidth || 1280)),
+                height: Math.max(240, Number(source.get('height') || window.innerHeight || 720))
+            };
+        }
+
+        function setDisplay(display) {
+            state.display = display;
+            document.documentElement.dataset.primary = display.primary ? 'true' : 'false';
+            document.documentElement.dataset.wallpaperAttached = state.wallpaperAttached ? 'true' : 'false';
+            document.documentElement.dataset.multidisplay = display.total > 1 ? 'true' : 'false';
+            const role = display.primary ? 'primary' : 'secondary';
+            refs.monitorPill.textContent = `${display.label || 'display'} / ${role} / ${display.index + 1} of ${display.total}`;
+            refs.footerLeft.textContent = `${display.label || 'Display'} ${display.primary ? 'wallpaper core' : 'wallpaper relay'} active`;
+            refs.controlMeta.textContent = state.wallpaperAttached
+                ? 'Wallpaper host aktif. Kontroller ses ve kisayollar uzerinden calisiyor.'
+                : 'Wallpaper host baglanamadi. Kontroller fallback modunda calisiyor.';
+            renderMonitorRelays(display);
+        }
+
+        function setControlMeta(text = '') {
+            refs.controlMeta.textContent = String(text || '').trim() || refs.controlMeta.textContent;
+        }
+
+        async function runDesktopAction(action = '') {
+            try {
+                switch (action) {
+                    case 'open-cockpit':
+                        await window.HADESDesktop?.openOpsCockpit?.();
+                        setControlMeta('Ops Cockpit acildi.');
+                        return;
+                    case 'minimize-cockpit':
+                        await window.HADESDesktop?.minimizeOpsCockpit?.();
+                        setControlMeta('Ops Cockpit kucultuldu.');
+                        return;
+                    case 'restore-main':
+                        await window.HADESDesktop?.restoreMainWindow?.();
+                        setControlMeta('Ana pencere geri getirildi.');
+                        return;
+                    case 'hide-ambient':
+                        await window.HADESDesktop?.hideAmbientDesktop?.();
+                        setControlMeta('Ambient wallpaper kapatildi.');
+                        return;
+                    default:
+                        return;
+                }
+            } catch (error) {
+                setControlMeta(`Desktop action hata verdi: ${error?.message || String(error)}`);
+            }
+        }
+
+        function bindControls() {
+            refs.openCockpitBtn?.addEventListener('click', () => {
+                void runDesktopAction('open-cockpit');
+            });
+            refs.minimizeCockpitBtn?.addEventListener('click', () => {
+                void runDesktopAction('minimize-cockpit');
+            });
+            refs.restoreMainBtn?.addEventListener('click', () => {
+                void runDesktopAction('restore-main');
+            });
+            refs.hideAmbientBtn?.addEventListener('click', () => {
+                void runDesktopAction('hide-ambient');
+            });
+        }
+
+        function shortUrl(value) {
+            try {
+                const parsed = new URL(String(value || ''));
+                return `${parsed.hostname.replace(/^www\./, '')}${parsed.pathname === '/' ? '' : parsed.pathname}`;
+            } catch (_) {
+                return String(value || '').trim();
+            }
+        }
+
+        function timeAgo(value) {
+            const at = new Date(value).getTime();
+            if (!Number.isFinite(at)) return 'simdi';
+            const delta = Math.max(0, Date.now() - at);
+            if (delta < 60 * 1000) return `${Math.round(delta / 1000)} sn`;
+            if (delta < 60 * 60 * 1000) return `${Math.round(delta / 60000)} dk`;
+            return `${Math.round(delta / 3600000)} sa`;
+        }
+
+        function pushEvent(event) {
+            if (!event || !event.type) return;
+            state.events = [event, ...state.events.filter((entry) => entry.id !== event.id)].slice(0, 6);
+            renderEvents();
+        }
+
+        function renderEvents() {
+            const list = state.events.length ? state.events : [{
+                id: 'boot',
+                type: 'ambient.ready',
+                at: new Date().toISOString(),
+                payload: { note: 'Desktop aura online' }
+            }];
+            refs.eventList.innerHTML = list.map((event) => {
+                const payload = event.payload || {};
+                const summary = payload.browser?.title
+                    || payload.ui?.browserPanelVisible === false && 'Browser fold mode'
+                    || payload.note
+                    || payload.message
+                    || payload.browser?.url
+                    || 'Telemetry update';
+                return `
+                    <article class="event-row">
+                        <div class="event-type">${escapeHtml(event.type)}</div>
+                        <div>${escapeHtml(String(summary || 'Telemetry update'))}</div>
+                        <div class="event-time">${escapeHtml(timeAgo(event.at))} once</div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function buildTokens(snapshot) {
+            const voice = snapshot?.voice || {};
+            const browser = snapshot?.browser || {};
+            const spotify = snapshot?.spotify || {};
+            const health = snapshot?.health || {};
+            const tokens = [
+                voice.mode || 'idle',
+                voice.chip || 'voice standby',
+                browser.query || browser.title || 'browser standby',
+                browser.url ? shortUrl(browser.url) : '',
+                spotify.authenticated ? 'spotify linked' : 'spotify idle',
+                health.openAiConfigured ? 'openai online' : 'openai offline',
+                state.connected ? 'ops websocket online' : 'ops websocket retry'
+            ].filter(Boolean).slice(0, state.display.primary ? 7 : 4);
+
+            refs.thoughtStream.innerHTML = tokens.map((token, index) => (
+                `<span class="token" style="animation-delay:${index * 0.18}s">${escapeHtml(token)}</span>`
+            )).join('');
+        }
+
+        function renderWave(snapshot) {
+            const mode = String(snapshot?.voice?.mode || 'idle').toLowerCase();
+            const heights = mode === 'listening'
+                ? [52, 70, 44, 68, 56, 72, 48, 64, 36]
+                : mode === 'thinking'
+                    ? [24, 42, 58, 74, 58, 42, 24, 18, 12]
+                    : [14, 18, 22, 28, 34, 26, 20, 16, 12];
+
+            refs.waveband.innerHTML = heights.map((height, index) => (
+                `<span class="bar" style="height:${height}px;animation-delay:${index * 0.1}s"></span>`
+            )).join('');
+        }
+
+        function renderMonitorRelays(display = state.display) {
+            const total = Math.max(1, Number(display?.total || 1));
+            if (!refs.monitorRelayGrid) return;
+            if (total <= 1) {
+                refs.monitorRelayGrid.innerHTML = '';
+                return;
+            }
+
+            const relays = Array.from({ length: total }, (_, index) => {
+                const xPercent = ((index + 0.5) / total) * 100;
+                const size = Math.max(120, Math.round(Math.min(window.innerWidth / (total * 2.8), window.innerHeight * 0.24)));
+                return `<div class="monitor-relay" style="--x:${xPercent}%;--size:${size}px;--delay:${(index * 0.38).toFixed(2)}s"></div>`;
+            });
+            refs.monitorRelayGrid.innerHTML = relays.join('');
+        }
+
+        function renderSnapshot(snapshot) {
+            state.snapshot = snapshot;
+            const voice = snapshot?.voice || {};
+            const browser = snapshot?.browser || {};
+            const spotify = snapshot?.spotify || {};
+            const browserLabel = browser.title || browser.query || 'No active target';
+            const spotifyLabel = spotify.authenticated
+                ? (spotify.availableDeviceName || spotify.activeDeviceName || 'Spotify ready')
+                : 'Not linked';
+
+            refs.voicePill.textContent = voice.mode ? `voice / ${voice.mode}` : 'wake standby';
+            refs.backendPill.textContent = state.connected ? 'backend sync / live' : 'backend sync / poll';
+            refs.voiceValue.textContent = voice.chip || 'Wake standby';
+            refs.voiceDetail.textContent = voice.detail || '"HADES" ile dinlemeye gececek.';
+            refs.browserValue.textContent = browserLabel;
+            refs.browserDetail.textContent = browser.url ? shortUrl(browser.url) : 'Tarayici hedefi bekleniyor.';
+            refs.spotifyValue.textContent = spotifyLabel;
+            refs.spotifyDetail.textContent = spotify.authenticated
+                ? `Cihazlar: ${spotify.deviceCount || 0}`
+                : 'Baglanti yok.';
+            refs.cockpitValue.textContent = state.display.primary ? 'Ctrl+Shift+O' : 'Ambient relay';
+            refs.footerRight.textContent = state.display.primary
+                ? 'Ctrl+Shift+H main / Ctrl+Shift+D ambient'
+                : 'Desktop aura mirror online';
+
+            state.events = Array.isArray(snapshot?.recentEvents) && snapshot.recentEvents.length
+                ? snapshot.recentEvents.slice(0, 6)
+                : state.events;
+
+            buildTokens(snapshot);
+            renderWave(snapshot);
+            renderEvents();
+        }
+
+        async function pullState() {
+            const response = await fetch(`${backendBase}/ops/state`, { cache: 'no-store' });
+            if (!response.ok) throw new Error(`ops/state ${response.status}`);
+            const data = await response.json();
+            state.connected = true;
+            renderSnapshot(data?.state || {});
+        }
+
+        function connectSocket() {
+            if (state.socket) {
+                try { state.socket.close(); } catch (_) {}
+            }
+
+            const socket = new WebSocket(`${wsBase}/ops/events`);
+            state.socket = socket;
+
+            socket.addEventListener('open', () => {
+                state.connected = true;
+                refs.backendPill.textContent = 'backend sync / live';
+            });
+
+            socket.addEventListener('message', (event) => {
+                try {
+                    const payload = JSON.parse(event.data);
+                    if (payload.type === 'ops:snapshot') {
+                        state.connected = true;
+                        state.events = Array.isArray(payload.recentEvents) ? payload.recentEvents.slice(0, 6) : state.events;
+                        renderSnapshot({
+                            ...(state.snapshot || {}),
+                            browser: payload.browser || state.snapshot?.browser,
+                            ui: payload.ui || state.snapshot?.ui,
+                            recentEvents: state.events
+                        });
+                        return;
+                    }
+
+                    if (payload.event) {
+                        pushEvent(payload.event);
+                    } else if (payload.type) {
+                        pushEvent(payload);
+                    }
+                } catch (_) {
+                    // Telemetri parse edilemezse polling devam eder.
+                }
+            });
+
+            socket.addEventListener('close', () => {
+                if (state.socket !== socket) return;
+                state.connected = false;
+                state.socket = null;
+                refs.backendPill.textContent = 'backend sync / retry';
+                window.setTimeout(connectSocket, 1800);
+            });
+
+            socket.addEventListener('error', () => {
+                if (state.socket !== socket) return;
+                state.connected = false;
+            });
+        }
+
+        function tickClock() {
+            refs.clockPill.textContent = new Intl.DateTimeFormat('tr-TR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }).format(new Date());
+        }
+
+        function escapeHtml(value) {
+            return String(value || '').replace(/[&<>"]/g, (char) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;'
+            }[char] || char));
+        }
+
+        window.addEventListener('hades-ambient-display-changed', (event) => {
+            const detail = event.detail || {};
+            state.wallpaperAttached = Boolean(detail.wallpaperAttached);
+            setDisplay({
+                id: String(detail.id || state.display.id || ''),
+                index: Number(detail.index || 0),
+                total: Math.max(1, Number(detail.total || 1)),
+                label: String(detail.label || state.display.label || ''),
+                primary: Boolean(detail.primary),
+                width: Math.max(320, Number(detail.width || window.innerWidth)),
+                height: Math.max(240, Number(detail.height || window.innerHeight))
+            });
+        });
+
+        setDisplay(state.display);
+        bindControls();
+        tickClock();
+        renderWave();
+        renderEvents();
+        buildTokens();
+        renderMonitorRelays(state.display);
+        connectSocket();
+        pullState().catch(() => {
+            refs.backendPill.textContent = 'backend sync / waiting';
+        });
+        window.addEventListener('resize', () => {
+            renderMonitorRelays(state.display);
+        });
+        window.setInterval(tickClock, 1000);
+        window.setInterval(() => {
+            pullState().catch(() => {});
+        }, 2400);
+    </script>
+</body>
+</html>

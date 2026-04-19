@@ -1,0 +1,273 @@
+#hades-bridge-root {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 2147483647;
+    font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    color: #ecf4ff;
+}
+
+#hades-voice-hud {
+    display: none !important;
+}
+
+#hades-bridge-toggle {
+    width: 62px;
+    height: 62px;
+    border: none;
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at 30% 30%, #8ef7d1, transparent 35%),
+        linear-gradient(135deg, #0e1729, #17345f 58%, #1e6a7f);
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    box-shadow: 0 22px 55px rgba(3, 10, 20, 0.45);
+    cursor: pointer;
+}
+
+#hades-bridge-panel {
+    width: 340px;
+    margin-top: 14px;
+    border-radius: 24px;
+    border: 1px solid rgba(142, 247, 209, 0.18);
+    background:
+        linear-gradient(180deg, rgba(8, 15, 27, 0.96), rgba(15, 26, 45, 0.97)),
+        radial-gradient(circle at top right, rgba(142, 247, 209, 0.12), transparent 30%);
+    box-shadow: 0 28px 80px rgba(3, 10, 20, 0.52);
+    backdrop-filter: blur(14px);
+    overflow: hidden;
+}
+
+#hades-bridge-panel[data-open="false"] {
+    display: none;
+}
+
+.hades-bridge-header {
+    padding: 18px 18px 12px 18px;
+    border-bottom: 1px solid rgba(142, 247, 209, 0.1);
+}
+
+.hades-bridge-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hades-bridge-brand-copy {
+    min-width: 0;
+}
+
+.hades-bridge-logo {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    object-fit: contain;
+    border: 1px solid rgba(142, 247, 209, 0.22);
+    box-shadow: 0 12px 26px rgba(3, 10, 20, 0.26);
+    background: rgba(255, 255, 255, 0.04);
+    padding: 5px;
+}
+
+.hades-bridge-kicker {
+    margin: 0 0 6px 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #8ef7d1;
+}
+
+.hades-bridge-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.hades-bridge-subtitle {
+    margin: 12px 0 0 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: rgba(236, 244, 255, 0.76);
+}
+
+.hades-bridge-body {
+    padding: 16px 18px 18px 18px;
+}
+
+.hades-bridge-chip-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.hades-bridge-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(236, 244, 255, 0.88);
+}
+
+.hades-bridge-chip[data-tone="ok"] {
+    background: rgba(72, 201, 176, 0.16);
+    color: #8ef7d1;
+}
+
+.hades-bridge-chip[data-tone="warn"] {
+    background: rgba(255, 209, 102, 0.18);
+    color: #ffd166;
+}
+
+.hades-bridge-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.hades-bridge-actions button {
+    min-height: 42px;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    color: #08111f;
+    background: linear-gradient(135deg, #8ef7d1, #78d7ff);
+}
+
+.hades-bridge-actions button[data-style="secondary"] {
+    color: #e6f0ff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.hades-bridge-actions button[data-a="hide"] {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, rgba(255, 209, 102, 0.2), rgba(255, 255, 255, 0.08));
+    border: 1px solid rgba(255, 209, 102, 0.24);
+}
+
+.hades-bridge-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+.hades-bridge-toggle-row label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hades-bridge-toggle-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+}
+
+.hades-bridge-voice-card {
+    margin-bottom: 14px;
+    padding: 12px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.hades-bridge-voice-status {
+    margin-bottom: 10px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: rgba(236, 244, 255, 0.82);
+}
+
+.hades-bridge-voice-status[data-tone="warn"] {
+    color: #ffd166;
+}
+
+.hades-bridge-voice-meter {
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+.hades-bridge-voice-meter span {
+    display: block;
+    width: 0%;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #8ef7d1, #78d7ff);
+    transition: width 0.12s ease;
+}
+
+.hades-bridge-log {
+    margin-top: 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 12px;
+    max-height: 180px;
+    overflow: auto;
+    font-size: 12px;
+    line-height: 1.45;
+    color: rgba(236, 244, 255, 0.8);
+}
+
+.hades-bridge-log p {
+    margin: 0 0 8px 0;
+}
+
+.hades-bridge-log p:last-child {
+    margin-bottom: 0;
+}
+
+.hades-bridge-hidden-message {
+    display: none !important;
+}
+
+#hades-bridge-toast-host {
+    position: fixed;
+    right: 20px;
+    bottom: 430px;
+    display: grid;
+    gap: 10px;
+    width: min(360px, calc(100vw - 32px));
+    z-index: 2147483647;
+}
+
+.hades-bridge-toast {
+    border-radius: 16px;
+    padding: 12px 14px;
+    box-shadow: 0 18px 44px rgba(3, 10, 20, 0.4);
+    border: 1px solid rgba(142, 247, 209, 0.18);
+    background: rgba(8, 15, 27, 0.94);
+    color: #ecf4ff;
+    font-size: 13px;
+    line-height: 1.45;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+.hades-bridge-toast[data-tone="ok"] {
+    border-color: rgba(142, 247, 209, 0.28);
+    background: linear-gradient(180deg, rgba(11, 26, 24, 0.95), rgba(12, 38, 33, 0.94));
+}
+
+.hades-bridge-toast[data-tone="warn"] {
+    border-color: rgba(255, 209, 102, 0.28);
+    background: linear-gradient(180deg, rgba(36, 24, 9, 0.95), rgba(54, 35, 11, 0.94));
+}
+
+.hades-bridge-toast.is-leaving {
+    opacity: 0;
+    transform: translateY(8px);
+}

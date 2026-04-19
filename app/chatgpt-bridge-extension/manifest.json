@@ -1,0 +1,68 @@
+{
+  "manifest_version": 3,
+  "name": "HADES Bridge",
+  "version": "1.0.17",
+  "description": "HADES oturumunu yerel cihaz ve komut köprüsüyle bağlar.",
+  "permissions": [
+    "scripting",
+    "storage",
+    "alarms",
+    "notifications",
+    "tabs",
+    "windows"
+  ],
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "http://127.0.0.1:3001/*",
+    "http://localhost:3001/*"
+  ],
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*"
+      ],
+      "js": [
+        "theme-start.js",
+        "brand-start.js"
+      ],
+      "css": [
+        "hades-theme.css"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*"
+      ],
+      "js": [
+        "wake-word-shared.js",
+        "wake-strategy-shared.js",
+        "voice-session-shared.js",
+        "voice-output-shared.js",
+        "schedule-intent-shared.js",
+        "content-script.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "bridge.css",
+        "hades-cover.png",
+        "wake-word-shared.js",
+        "wake-bridge.js"
+      ],
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*"
+      ]
+    }
+  ]
+}
